@@ -1,0 +1,51 @@
+{
+  "name": "proxy-compare",
+  "description": "Compare two objects using accessed properties with Proxy",
+  "version": "1.0.0",
+  "author": "Daishi Kato",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dai-shi/proxy-compare.git"
+  },
+  "source": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.esm.js",
+  "browser": "./dist/index.umd.js",
+  "types": "./dist/src/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "compile": "microbundle build --format cjs,es,umd",
+    "test": "run-s eslint tsc-test jest",
+    "eslint": "eslint --ext .js,.ts --ignore-pattern dist .",
+    "jest": "jest --preset ts-jest/presets/js-with-ts __tests__/*.ts",
+    "tsc-test": "tsc --project . --noEmit",
+    "apidoc": "documentation readme --section API --markdown-toc false --parse-extension ts src/*.ts"
+  },
+  "keywords": [
+    "proxy",
+    "compare",
+    "equal",
+    "shallowequal",
+    "deepequal"
+  ],
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "@typescript-eslint/eslint-plugin": "^2.22.0",
+    "@typescript-eslint/parser": "^2.22.0",
+    "documentation": "^12.1.4",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.20.1",
+    "jest": "^25.1.0",
+    "microbundle": "^0.12.0-next.8",
+    "npm-run-all": "^4.1.5",
+    "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3"
+  }
+}
