@@ -173,7 +173,7 @@ export const isDeepChanged = (
   affected: Affected,
   cache?: WeakMap<object, unknown>,
   mode = 0,
-): boolean | undefined => {
+): boolean => {
   if (origObj === nextObj && (mode & MODE_IGNORE_REF_EQUALITY) === 0) return false;
   if (typeof origObj !== 'object' || origObj === null) return true;
   if (typeof nextObj !== 'object' || nextObj === null) return true;
@@ -182,7 +182,7 @@ export const isDeepChanged = (
   if (cache && (mode & MODE_IGNORE_REF_EQUALITY) === 0) {
     const hit = (cache as DeepChangedCache).get(origObj);
     if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
-      return hit[CHANGED_PROPERTY];
+      return hit[CHANGED_PROPERTY] || false;
     }
     // for object with cycles (CHANGED_PROPERTY is `undefined`)
     cache.set(origObj, { [NEXT_OBJECT_PROPERTY]: nextObj });

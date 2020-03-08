@@ -97,7 +97,7 @@ const objToCompare = ...;
 const changed = isDeepChanged(obj, objToCompare, affected);
 ```
 
-Returns **([boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean) \| [undefined](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined))** 
+Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** 
 
 ## Projects using this library
 

@@ -27,7 +27,7 @@ export declare const MODE_IGNORE_REF_EQUALITY_IN_DEEP: number;
  * const objToCompare = ...;
  * const changed = isDeepChanged(obj, objToCompare, affected);
  */
-export declare const isDeepChanged: (origObj: unknown, nextObj: unknown, affected: Affected, cache?: WeakMap<object, unknown> | undefined, mode?: number) => boolean | undefined;
+export declare const isDeepChanged: (origObj: unknown, nextObj: unknown, affected: Affected, cache?: WeakMap<object, unknown> | undefined, mode?: number) => boolean;
 export declare const trackMemo: (obj: unknown) => boolean;
 export declare const getUntrackedObject: <T>(obj: T) => T | null;
 export {};
