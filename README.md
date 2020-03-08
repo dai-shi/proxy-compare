@@ -59,7 +59,7 @@ It will recursively create a proxy upon access.
 #### Parameters
 
 -   `obj` **T** 
--   `affected` **Affected** 
+-   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** 
 -   `proxyCache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>?** 
 
 #### Examples
@@ -84,7 +84,7 @@ It will compare only with affected object properties
 
 -   `origObj` **any** 
 -   `nextObj` **any** 
--   `affected` **Affected** 
+-   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** 
 -   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>?** 
 -   `mode`   (optional, default `0`)
 

@@ -108,7 +108,7 @@ const createProxyHandler = <T extends object>() => {
  */
 export const createDeepProxy = <T>(
   obj: T,
-  affected: Affected,
+  affected: WeakMap<object, unknown>,
   proxyCache?: WeakMap<object, unknown>,
 ): T => {
   if (!isPlainObject(obj)) return obj;
@@ -128,7 +128,7 @@ export const createDeepProxy = <T>(
       proxyCache.set(target, proxyHandler);
     }
   }
-  proxyHandler[AFFECTED_PROPERTY] = affected;
+  proxyHandler[AFFECTED_PROPERTY] = affected as Affected;
   proxyHandler[PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object>;
   return proxyHandler[PROXY_PROPERTY];
 };
@@ -153,7 +153,7 @@ export const MODE_IGNORE_REF_EQUALITY_IN_DEEP = (
 
 type DeepChangedCache = WeakMap<object, {
   [NEXT_OBJECT_PROPERTY]: object;
-  [CHANGED_PROPERTY]?: boolean;
+  [CHANGED_PROPERTY]: boolean;
 }>;
 
 /**
@@ -170,24 +170,27 @@ type DeepChangedCache = WeakMap<object, {
 export const isDeepChanged = (
   origObj: unknown,
   nextObj: unknown,
-  affected: Affected,
+  affected: WeakMap<object, unknown>,
   cache?: WeakMap<object, unknown>,
   mode = 0,
 ): boolean => {
   if (origObj === nextObj && (mode & MODE_IGNORE_REF_EQUALITY) === 0) return false;
   if (typeof origObj !== 'object' || origObj === null) return true;
   if (typeof nextObj !== 'object' || nextObj === null) return true;
-  const used = affected.get(origObj);
+  const used = (affected as Affected).get(origObj);
   if (!used) return (mode & MODE_ASSUME_UNCHANGED_IF_UNAFFECTED) === 0;
   if (cache && (mode & MODE_IGNORE_REF_EQUALITY) === 0) {
     const hit = (cache as DeepChangedCache).get(origObj);
     if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
-      return hit[CHANGED_PROPERTY] || false;
+      return hit[CHANGED_PROPERTY];
     }
-    // for object with cycles (CHANGED_PROPERTY is `undefined`)
-    cache.set(origObj, { [NEXT_OBJECT_PROPERTY]: nextObj });
+    // for object with cycles
+    (cache as DeepChangedCache).set(origObj, {
+      [NEXT_OBJECT_PROPERTY]: nextObj,
+      [CHANGED_PROPERTY]: false,
+    });
   }
-  let changed = null;
+  let changed: boolean | null = null;
   // eslint-disable-next-line no-restricted-syntax
   for (const key of used) {
     const c = key === OWN_KEYS_SYMBOL ? isOwnKeysChanged(origObj, nextObj)
