@@ -19,7 +19,31 @@ npm install proxy-compare
 ## Usage
 
 ```javascript
-
+$ node
+> const { createDeepProxy, isDeepChanged } = require('proxy-compare')
+undefined
+> state = { a: 1, b: 2 }
+{ a: 1, b: 2 }
+> affected = new WeakMap()
+WeakMap { [items unknown] }
+> proxy = createDeepProxy(state, affected)
+Proxy [ { a: 1, b: 2 },
+  { r: [Function],
+    u: [Function],
+    get: [Function],
+    has: [Function],
+    ownKeys: [Function],
+    p: Proxy [ [Object], [Circular] ],
+    o: { a: 1, b: 2 },
+    t: false,
+    a: WeakMap { [items unknown] },
+    c: undefined } ]
+> proxy.a
+1
+> isDeepChanged(state, { a: 1, b: 22 }, affected)
+false
+> isDeepChanged(state, { a: 11, b: 2 }, affected)
+true
 ```
 
 ## API
