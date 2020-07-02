@@ -1,8 +1,8 @@
 # proxy-compare
 
-[![Build Status](https://travis-ci.com/dai-shi/proxy-compare.svg?branch=master)](https://travis-ci.com/dai-shi/proxy-compare)
-[![npm version](https://badge.fury.io/js/proxy-compare.svg)](https://badge.fury.io/js/proxy-compare)
-[![bundle size](https://badgen.net/bundlephobia/minzip/proxy-compare)](https://bundlephobia.com/result?p=proxy-compare)
+[![CI](https://img.shields.io/github/workflow/status/dai-shi/proxy-compare/CI)](https://github.com/dai-shi/proxy-compare/actions?query=workflow%3ACI)
+[![npm](https://img.shields.io/npm/v/proxy-compare)](https://www.npmjs.com/package/proxy-compare)
+[![size](https://img.shields.io/bundlephobia/minzip/proxy-compare)](https://bundlephobia.com/result?p=proxy-compare)
 
 Compare two objects using accessed properties with Proxy
 
