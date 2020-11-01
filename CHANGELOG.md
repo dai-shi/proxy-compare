@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2020-11-01
+### Added
+- affectedToPathList util
+
 ## [1.0.2] - 2020-07-02
 ### Changed
 - Modern build
