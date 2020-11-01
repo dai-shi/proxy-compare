@@ -229,3 +229,23 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
   }
   return null;
 };
+
+// convert affected to path list
+export const affectedToPathList = (
+  obj: unknown,
+  affected: WeakMap<object, unknown>,
+) => {
+  const list: (string | number | symbol)[][] = [];
+  const walk = (x: unknown, path?: (string | number | symbol)[]) => {
+    const used = (affected as Affected).get(x as object);
+    if (used) {
+      used.forEach((key) => {
+        walk((x as any)[key], path ? [...path, key] : [key]);
+      });
+    } else if (path) {
+      list.push(path);
+    }
+  };
+  walk(obj);
+  return list;
+};
