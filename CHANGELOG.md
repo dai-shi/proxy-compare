@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2020-11-18
+### Changed
+- Fix MODE_IGNORE_REF_EQUALITY behavior
+
 ## [1.0.3] - 2020-11-01
 ### Added
 - affectedToPathList util
