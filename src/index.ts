@@ -24,6 +24,11 @@ const isPlainObject = <T>(obj: T): obj is T extends object ? T : never => {
   }
 };
 
+// check object type
+const isObject = (x: unknown): x is object => (
+  typeof x === 'object' && x !== null
+);
+
 // copy obj if frozen
 const unfreeze = (obj: object) => {
   if (!Object.isFrozen(obj)) return obj;
@@ -175,8 +180,8 @@ export const isDeepChanged = (
   mode = 0,
 ): boolean => {
   if (origObj === nextObj && (mode & MODE_IGNORE_REF_EQUALITY) === 0) return false;
-  if (typeof origObj !== 'object' || origObj === null) return true;
-  if (typeof nextObj !== 'object' || nextObj === null) return true;
+  if (!isObject(origObj)) return true;
+  if (!isObject(nextObj)) return true;
   const used = (affected as Affected).get(origObj);
   if (!used) return (mode & MODE_ASSUME_UNCHANGED_IF_UNAFFECTED) === 0;
   if (cache && (mode & MODE_IGNORE_REF_EQUALITY) === 0) {
