@@ -179,9 +179,11 @@ export const isDeepChanged = (
   cache?: WeakMap<object, unknown>,
   mode = 0,
 ): boolean => {
-  if (origObj === nextObj && (mode & MODE_IGNORE_REF_EQUALITY) === 0) return false;
-  if (!isObject(origObj)) return true;
-  if (!isObject(nextObj)) return true;
+  if (Object.is(origObj, nextObj)) {
+    if (!isObject(origObj)) return false;
+    if ((mode & MODE_IGNORE_REF_EQUALITY) === 0) return false;
+  }
+  if (!isObject(origObj) || !isObject(nextObj)) return true;
   const used = (affected as Affected).get(origObj);
   if (!used) return (mode & MODE_ASSUME_UNCHANGED_IF_UNAFFECTED) === 0;
   if (cache && (mode & MODE_IGNORE_REF_EQUALITY) === 0) {
