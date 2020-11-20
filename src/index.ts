@@ -29,11 +29,19 @@ const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
 
+const getPropDescs = (obj: object) => {
+  const descriptors = Object.getOwnPropertyDescriptors(obj);
+  Object.values(descriptors).forEach((descriptor) => {
+    descriptor.configurable = true;
+  });
+  return descriptors;
+};
+
 // copy obj if frozen
 const unfreeze = (obj: object) => (
   !Object.isFrozen(obj) ? obj
     : Array.isArray(obj) ? Array.from(obj)
-      : /* otherwise */ Object.assign({}, obj)
+      : /* otherwise */ Object.create(obj.constructor?.prototype || null, getPropDescs(obj))
 );
 
 type Affected = WeakMap<object, Set<string | number | symbol>>;
