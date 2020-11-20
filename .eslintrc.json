@@ -30,6 +30,8 @@
     "no-bitwise": "off",
     "symbol-description": "off",
     "prefer-object-spread": "off",
+    "no-multi-assign": "off",
+    "no-nested-ternary": "off",
     "@typescript-eslint/ban-types": "off"
   },
   "overrides": [{

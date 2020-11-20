@@ -30,20 +30,18 @@ const isObject = (x: unknown): x is object => (
 );
 
 // copy obj if frozen
-const unfreeze = (obj: object) => {
-  if (!Object.isFrozen(obj)) return obj;
-  if (Array.isArray(obj)) {
-    return Array.from(obj);
-  }
-  return Object.assign({}, obj);
-};
+const unfreeze = (obj: object) => (
+  !Object.isFrozen(obj) ? obj
+    : Array.isArray(obj) ? Array.from(obj)
+      : /* otherwise */ Object.assign({}, obj)
+);
 
 type Affected = WeakMap<object, Set<string | number | symbol>>;
 type ProxyCache<T extends object> = WeakMap<object, ProxyHandler<T>>;
 type ProxyHandler<T extends object> = {
-  [PROXY_PROPERTY]: T;
+  [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object>;
-  [AFFECTED_PROPERTY]: Affected;
+  [AFFECTED_PROPERTY]?: Affected;
   [TRACK_OBJECT_PROPERTY]: boolean;
   [ORIGINAL_OBJECT_PROPERTY]: T;
   [RECORD_USAGE_PROPERTY](key: string | number | symbol): void;
@@ -51,22 +49,27 @@ type ProxyHandler<T extends object> = {
   get(target: T, key: string | number | symbol): unknown;
   has(target: T, key: string | number | symbol): boolean;
   ownKeys(target: T): (string | number | symbol)[];
+  set?(target: T, key: string | number | symbol, value: unknown): boolean;
+  deleteProperty?(target: T, key: string | number | symbol): boolean;
 };
 
-const createProxyHandler = <T extends object>() => {
+const createProxyHandler = <T extends object>(origObj: T) => {
   const handler: ProxyHandler<T> = {
+    [ORIGINAL_OBJECT_PROPERTY]: origObj,
+    [TRACK_OBJECT_PROPERTY]: false, // for trackMemo
     [RECORD_USAGE_PROPERTY](key) {
-      if (this[TRACK_OBJECT_PROPERTY]) return;
-      let used = this[AFFECTED_PROPERTY].get(this[ORIGINAL_OBJECT_PROPERTY]);
-      if (!used) {
-        used = new Set();
-        this[AFFECTED_PROPERTY].set(this[ORIGINAL_OBJECT_PROPERTY], used);
+      if (!this[TRACK_OBJECT_PROPERTY]) {
+        let used = (this[AFFECTED_PROPERTY] as Affected).get(this[ORIGINAL_OBJECT_PROPERTY]);
+        if (!used) {
+          used = new Set();
+          (this[AFFECTED_PROPERTY] as Affected).set(this[ORIGINAL_OBJECT_PROPERTY], used);
+        }
+        used.add(key);
       }
-      used.add(key);
     },
     [RECORD_OBJECT_AS_USED_PROPERTY]() {
       this[TRACK_OBJECT_PROPERTY] = true;
-      this[AFFECTED_PROPERTY].delete(this[ORIGINAL_OBJECT_PROPERTY]);
+      (this[AFFECTED_PROPERTY] as Affected).delete(this[ORIGINAL_OBJECT_PROPERTY]);
     },
     get(target, key) {
       if (key === GET_ORIGINAL_SYMBOL) {
@@ -75,7 +78,7 @@ const createProxyHandler = <T extends object>() => {
       this[RECORD_USAGE_PROPERTY](key);
       return createDeepProxy(
         (target as any)[key],
-        this[AFFECTED_PROPERTY],
+        (this[AFFECTED_PROPERTY] as Affected),
         this[PROXY_CACHE_PROPERTY],
       );
     },
@@ -95,7 +98,10 @@ const createProxyHandler = <T extends object>() => {
       this[RECORD_USAGE_PROPERTY](OWN_KEYS_SYMBOL);
       return Reflect.ownKeys(target);
     },
-  } as ProxyHandler<T>; // XXX wrong assertion, better way?
+  };
+  if (Object.isFrozen(origObj)) {
+    handler.set = handler.deleteProperty = () => false;
+  }
   return handler;
 };
 
@@ -125,17 +131,15 @@ export const createDeepProxy = <T>(
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
   if (!proxyHandler) {
-    proxyHandler = createProxyHandler<T extends object ? T : never>();
+    proxyHandler = createProxyHandler<T extends object ? T : never>(target);
     proxyHandler[PROXY_PROPERTY] = new Proxy(unfreeze(target), proxyHandler) as typeof target;
-    proxyHandler[ORIGINAL_OBJECT_PROPERTY] = target;
-    proxyHandler[TRACK_OBJECT_PROPERTY] = false; // for trackMemo
     if (proxyCache) {
       proxyCache.set(target, proxyHandler);
     }
   }
   proxyHandler[AFFECTED_PROPERTY] = affected as Affected;
-  proxyHandler[PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object>;
-  return proxyHandler[PROXY_PROPERTY];
+  proxyHandler[PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object> | undefined;
+  return proxyHandler[PROXY_PROPERTY] as typeof target;
 };
 
 const isOwnKeysChanged = (origObj: object, nextObj: object) => {
@@ -179,9 +183,10 @@ export const isDeepChanged = (
   cache?: WeakMap<object, unknown>,
   mode = 0,
 ): boolean => {
-  if (Object.is(origObj, nextObj)) {
-    if (!isObject(origObj)) return false;
-    if ((mode & MODE_IGNORE_REF_EQUALITY) === 0) return false;
+  if (Object.is(origObj, nextObj) && (
+    !isObject(origObj) || (mode & MODE_IGNORE_REF_EQUALITY) === 0)
+  ) {
+    return false;
   }
   if (!isObject(origObj) || !isObject(nextObj)) return true;
   const used = (affected as Affected).get(origObj);
