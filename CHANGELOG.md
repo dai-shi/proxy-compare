@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.1.2] - 2020-11-21
+### Changed
+- Improve copying frozen objects
+
 ## [1.1.1] - 2020-11-20
 ### Changed
 - Avoid mutating frozen objects
