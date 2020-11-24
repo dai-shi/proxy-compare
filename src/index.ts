@@ -14,17 +14,21 @@ const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
 const CHANGED_PROPERTY = 'g';
 
-// check if obj is a plain object or an array
-const isPlainObject = <T>(obj: T): obj is T extends object ? T : never => {
-  try {
-    const proto = Object.getPrototypeOf(obj);
-    return proto === Object.prototype || proto === Array.prototype;
-  } catch (e) {
-    return false;
-  }
-};
+// get object prototype
+const getProto = Object.getPrototypeOf;
 
-// check object type
+const objectsToTrack = new WeakMap<object, boolean>();
+
+// check if obj is a plain object or an array
+const isObjectToTrack = <T>(obj: T): obj is T extends object ? T : never => (
+  obj && (
+    getProto(obj) === Object.prototype
+    || getProto(obj) === Array.prototype
+    || !!objectsToTrack.get(obj as unknown as object)
+  )
+);
+
+// check if it is object
 const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
@@ -41,7 +45,7 @@ const getPropDescs = (obj: object) => {
 const unfreeze = (obj: object) => (
   !Object.isFrozen(obj) ? obj
     : Array.isArray(obj) ? Array.from(obj)
-      : /* otherwise */ Object.create(obj.constructor?.prototype || null, getPropDescs(obj))
+      : /* otherwise */ Object.create(getProto(obj), getPropDescs(obj))
 );
 
 type Affected = WeakMap<object, Set<string | number | symbol>>;
@@ -130,7 +134,7 @@ export const createDeepProxy = <T>(
   affected: WeakMap<object, unknown>,
   proxyCache?: WeakMap<object, unknown>,
 ): T => {
-  if (!isPlainObject(obj)) return obj;
+  if (!isObjectToTrack(obj)) return obj;
   const origObj = (
     obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj }
   )[GET_ORIGINAL_SYMBOL]; // unwrap proxy
@@ -236,7 +240,7 @@ export const isDeepChanged = (
 
 // explicitly track object with memo
 export const trackMemo = (obj: unknown) => {
-  if (isPlainObject(obj)) {
+  if (isObjectToTrack(obj)) {
     return TRACK_MEMO_SYMBOL in obj;
   }
   return false;
@@ -244,10 +248,15 @@ export const trackMemo = (obj: unknown) => {
 
 // get original object from proxy
 export const getUntrackedObject = <T>(obj: T): T | null => {
-  if (isPlainObject(obj)) {
+  if (isObjectToTrack(obj)) {
     return (obj as { [GET_ORIGINAL_SYMBOL]?: T })[GET_ORIGINAL_SYMBOL] || null;
   }
   return null;
+};
+
+// mark object to track (even if it is not plain)
+export const markToTrack = (obj: object) => {
+  objectsToTrack.set(obj, true);
 };
 
 // convert affected to path list
