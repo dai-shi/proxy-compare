@@ -104,6 +104,8 @@ Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 -   [react-tracked](https://github.com/dai-shi/react-tracked)
 -   [reactive-react-redux](https://github.com/dai-shi/reactive-react-redux)
 -   [svelte3-redux](https://github.com/dai-shi/svelte3-redux)
+-   [proxy-memoize](https://github.com/dai-shi/proxy-memoize)
+-   [valtio](https://github.com/pmndrs/valtio)
 
 ## Similar libraries
 
