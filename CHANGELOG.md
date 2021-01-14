@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## [1.1.4] - 2021-01-14
 ### Changed
 - The markToTrack util takes optional second argument
 
