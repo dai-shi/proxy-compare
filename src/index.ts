@@ -21,10 +21,9 @@ const objectsToTrack = new WeakMap<object, boolean>();
 
 // check if obj is a plain object or an array
 const isObjectToTrack = <T>(obj: T): obj is T extends object ? T : never => (
-  obj && (
-    getProto(obj) === Object.prototype
-    || getProto(obj) === Array.prototype
-    || !!objectsToTrack.get(obj as unknown as object)
+  obj && (objectsToTrack.has(obj as unknown as object)
+    ? objectsToTrack.get(obj as unknown as object) as boolean
+    : (getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)
   )
 );
 
@@ -254,9 +253,9 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
   return null;
 };
 
-// mark object to track (even if it is not plain)
-export const markToTrack = (obj: object) => {
-  objectsToTrack.set(obj, true);
+// mark object to track or not (even if it is not plain)
+export const markToTrack = (obj: object, mark = true) => {
+  objectsToTrack.set(obj, mark);
 };
 
 // convert affected to path list
