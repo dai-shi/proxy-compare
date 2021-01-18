@@ -34,10 +34,22 @@ const isObject = (x: unknown): x is object => (
 
 // copy obj if frozen
 const unfreeze = (obj: object) => {
+  // Object.isFrozen() doesn't detect non-writable properties
+  // See: https://github.com/dai-shi/proxy-compare/pull/8
   const descriptors = Object.getOwnPropertyDescriptors(obj);
   const descs = Object.values(descriptors);
-  if (!Object.isFrozen(obj) && descs.every((desc) => desc.writable)) return obj;
-  if (Array.isArray(obj)) return Array.from(obj);
+  if (!Object.isFrozen(obj) && descs.every((desc) => desc.writable)) {
+    // Not frozen, so return as is
+    return obj;
+  }
+
+  // We need to copy the object
+  if (Array.isArray(obj)) {
+    // Arrays need a special way to copy
+    return Array.from(obj);
+  }
+  // For non-array objects, we create a new object keeping the prototype
+  // with changing all configurable options (otherwise, proxies will complain)
   descs.forEach((desc) => { desc.configurable = true; });
   return Object.create(getProto(obj), descriptors);
 };
