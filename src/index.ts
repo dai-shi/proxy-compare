@@ -32,20 +32,15 @@ const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
 
-const getPropDescs = (obj: object) => {
-  const descriptors = Object.getOwnPropertyDescriptors(obj);
-  Object.values(descriptors).forEach((descriptor) => {
-    descriptor.configurable = true;
-  });
-  return descriptors;
-};
-
 // copy obj if frozen
-const unfreeze = (obj: object) => (
-  !Object.isFrozen(obj) ? obj
-    : Array.isArray(obj) ? Array.from(obj)
-      : /* otherwise */ Object.create(getProto(obj), getPropDescs(obj))
-);
+const unfreeze = (obj: object) => {
+  const descriptors = Object.getOwnPropertyDescriptors(obj);
+  const descs = Object.values(descriptors);
+  if (!Object.isFrozen(obj) && descs.every((desc) => desc.writable)) return obj;
+  if (Array.isArray(obj)) return Array.from(obj);
+  descs.forEach((desc) => { desc.configurable = true; });
+  return Object.create(getProto(obj), descriptors);
+};
 
 type Affected = WeakMap<object, Set<string | number | symbol>>;
 type ProxyCache<T extends object> = WeakMap<object, ProxyHandler<T>>;
