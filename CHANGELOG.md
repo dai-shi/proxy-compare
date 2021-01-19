@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [1.1.5] - 2021-01-20
+### Changed
+- Fix read-only and non-configurable error (#8)
+
 ## [1.1.4] - 2021-01-14
 ### Changed
 - The markToTrack util takes optional second argument
