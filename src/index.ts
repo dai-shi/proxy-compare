@@ -8,7 +8,6 @@ const TRACK_OBJECT_PROPERTY = 't';
 const AFFECTED_PROPERTY = 'a';
 const RECORD_USAGE_PROPERTY = 'r';
 const RECORD_OBJECT_AS_USED_PROPERTY = 'u';
-const ORIGINAL_OBJECT_PROPERTY = 'o';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
@@ -61,7 +60,6 @@ type ProxyHandler<T extends object> = {
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object>;
   [AFFECTED_PROPERTY]?: Affected;
   [TRACK_OBJECT_PROPERTY]: boolean;
-  [ORIGINAL_OBJECT_PROPERTY]: T;
   [RECORD_USAGE_PROPERTY](key: string | number | symbol): void;
   [RECORD_OBJECT_AS_USED_PROPERTY](): void;
   get(target: T, key: string | number | symbol): unknown;
@@ -73,25 +71,24 @@ type ProxyHandler<T extends object> = {
 
 const createProxyHandler = <T extends object>(origObj: T) => {
   const handler: ProxyHandler<T> = {
-    [ORIGINAL_OBJECT_PROPERTY]: origObj,
     [TRACK_OBJECT_PROPERTY]: false, // for trackMemo
     [RECORD_USAGE_PROPERTY](key) {
       if (!this[TRACK_OBJECT_PROPERTY]) {
-        let used = (this[AFFECTED_PROPERTY] as Affected).get(this[ORIGINAL_OBJECT_PROPERTY]);
+        let used = (this[AFFECTED_PROPERTY] as Affected).get(origObj);
         if (!used) {
           used = new Set();
-          (this[AFFECTED_PROPERTY] as Affected).set(this[ORIGINAL_OBJECT_PROPERTY], used);
+          (this[AFFECTED_PROPERTY] as Affected).set(origObj, used);
         }
         used.add(key);
       }
     },
     [RECORD_OBJECT_AS_USED_PROPERTY]() {
       this[TRACK_OBJECT_PROPERTY] = true;
-      (this[AFFECTED_PROPERTY] as Affected).delete(this[ORIGINAL_OBJECT_PROPERTY]);
+      (this[AFFECTED_PROPERTY] as Affected).delete(origObj);
     },
     get(target, key) {
       if (key === GET_ORIGINAL_SYMBOL) {
-        return this[ORIGINAL_OBJECT_PROPERTY];
+        return origObj;
       }
       this[RECORD_USAGE_PROPERTY](key);
       return createDeepProxy(
