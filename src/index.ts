@@ -5,6 +5,7 @@ const GET_ORIGINAL_SYMBOL = Symbol();
 
 // properties
 const AFFECTED_PROPERTY = 'a';
+const FROZEN_PROPERTY = 'f';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
@@ -28,31 +29,34 @@ const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
 
-// copy obj if frozen
-const unfreeze = (obj: object) => {
-  // Object.isFrozen() doesn't detect non-writable properties
-  // See: https://github.com/dai-shi/proxy-compare/pull/8
-  const descriptors = Object.getOwnPropertyDescriptors(obj);
-  const descs = Object.values(descriptors);
-  if (!Object.isFrozen(obj) && descs.every((desc) => desc.writable)) {
-    // Not frozen, so return as is
-    return obj;
-  }
+// check if frozen
+const isFrozen = (obj: object) => (
+  Object.isFrozen(obj) || (
+    // Object.isFrozen() doesn't detect non-writable properties
+    // See: https://github.com/dai-shi/proxy-compare/pull/8
+    Object.values(Object.getOwnPropertyDescriptors(obj)).some(
+      (descriptor) => !descriptor.writable,
+    )
+  )
+);
 
-  // We need to copy the object
+// copy frozen object
+const unfreeze = (obj: object) => {
   if (Array.isArray(obj)) {
     // Arrays need a special way to copy
     return Array.from(obj);
   }
   // For non-array objects, we create a new object keeping the prototype
   // with changing all configurable options (otherwise, proxies will complain)
-  descs.forEach((desc) => { desc.configurable = true; });
+  const descriptors = Object.getOwnPropertyDescriptors(obj);
+  Object.values(descriptors).forEach((desc) => { desc.configurable = true; });
   return Object.create(getProto(obj), descriptors);
 };
 
 type Affected = WeakMap<object, Set<string | number | symbol>>;
 type ProxyCache<T extends object> = WeakMap<object, ProxyHandler<T>>;
 type ProxyHandler<T extends object> = {
+  [FROZEN_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object>;
   [AFFECTED_PROPERTY]?: Affected;
@@ -63,7 +67,7 @@ type ProxyHandler<T extends object> = {
   deleteProperty?(target: T, key: string | number | symbol): boolean;
 };
 
-const createProxyHandler = <T extends object>(origObj: T) => {
+const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   let trackObject = false; // for trackMemo
   const recordUsage = (h: ProxyHandler<T>, key: string | number | symbol) => {
     if (!trackObject) {
@@ -80,6 +84,7 @@ const createProxyHandler = <T extends object>(origObj: T) => {
     (h[AFFECTED_PROPERTY] as Affected).delete(origObj);
   };
   const handler: ProxyHandler<T> = {
+    [FROZEN_PROPERTY]: frozen,
     get(target, key) {
       if (key === GET_ORIGINAL_SYMBOL) {
         return origObj;
@@ -108,7 +113,7 @@ const createProxyHandler = <T extends object>(origObj: T) => {
       return Reflect.ownKeys(target);
     },
   };
-  if (Object.isFrozen(origObj)) {
+  if (frozen) {
     handler.set = handler.deleteProperty = () => false;
   }
   return handler;
@@ -136,12 +141,16 @@ export const createDeepProxy = <T>(
     obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj }
   )[GET_ORIGINAL_SYMBOL]; // unwrap proxy
   const target = origObj || obj;
+  const frozen = isFrozen(target);
   let proxyHandler: ProxyHandler<typeof target> | undefined = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
-  if (!proxyHandler) {
-    proxyHandler = createProxyHandler<T extends object ? T : never>(target);
-    proxyHandler[PROXY_PROPERTY] = new Proxy(unfreeze(target), proxyHandler) as typeof target;
+  if (!proxyHandler || proxyHandler[FROZEN_PROPERTY] !== frozen) {
+    proxyHandler = createProxyHandler<T extends object ? T : never>(target, frozen);
+    proxyHandler[PROXY_PROPERTY] = new Proxy(
+      frozen ? unfreeze(target) : target,
+      proxyHandler,
+    ) as typeof target;
     if (proxyCache) {
       proxyCache.set(target, proxyHandler);
     }
