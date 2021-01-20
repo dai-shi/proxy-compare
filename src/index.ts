@@ -4,10 +4,7 @@ const TRACK_MEMO_SYMBOL = Symbol();
 const GET_ORIGINAL_SYMBOL = Symbol();
 
 // properties
-const TRACK_OBJECT_PROPERTY = 't';
 const AFFECTED_PROPERTY = 'a';
-const RECORD_USAGE_PROPERTY = 'r';
-const RECORD_OBJECT_AS_USED_PROPERTY = 'u';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
@@ -59,9 +56,6 @@ type ProxyHandler<T extends object> = {
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object>;
   [AFFECTED_PROPERTY]?: Affected;
-  [TRACK_OBJECT_PROPERTY]: boolean;
-  [RECORD_USAGE_PROPERTY](key: string | number | symbol): void;
-  [RECORD_OBJECT_AS_USED_PROPERTY](): void;
   get(target: T, key: string | number | symbol): unknown;
   has(target: T, key: string | number | symbol): boolean;
   ownKeys(target: T): (string | number | symbol)[];
@@ -70,27 +64,27 @@ type ProxyHandler<T extends object> = {
 };
 
 const createProxyHandler = <T extends object>(origObj: T) => {
-  const handler: ProxyHandler<T> = {
-    [TRACK_OBJECT_PROPERTY]: false, // for trackMemo
-    [RECORD_USAGE_PROPERTY](key) {
-      if (!this[TRACK_OBJECT_PROPERTY]) {
-        let used = (this[AFFECTED_PROPERTY] as Affected).get(origObj);
-        if (!used) {
-          used = new Set();
-          (this[AFFECTED_PROPERTY] as Affected).set(origObj, used);
-        }
-        used.add(key);
+  let trackObject = false; // for trackMemo
+  const recordUsage = (h: ProxyHandler<T>, key: string | number | symbol) => {
+    if (!trackObject) {
+      let used = (h[AFFECTED_PROPERTY] as Affected).get(origObj);
+      if (!used) {
+        used = new Set();
+        (h[AFFECTED_PROPERTY] as Affected).set(origObj, used);
       }
-    },
-    [RECORD_OBJECT_AS_USED_PROPERTY]() {
-      this[TRACK_OBJECT_PROPERTY] = true;
-      (this[AFFECTED_PROPERTY] as Affected).delete(origObj);
-    },
+      used.add(key);
+    }
+  };
+  const recordObjectAsUsed = (h: ProxyHandler<T>) => {
+    trackObject = true;
+    (h[AFFECTED_PROPERTY] as Affected).delete(origObj);
+  };
+  const handler: ProxyHandler<T> = {
     get(target, key) {
       if (key === GET_ORIGINAL_SYMBOL) {
         return origObj;
       }
-      this[RECORD_USAGE_PROPERTY](key);
+      recordUsage(this, key);
       return createDeepProxy(
         (target as any)[key],
         (this[AFFECTED_PROPERTY] as Affected),
@@ -99,18 +93,18 @@ const createProxyHandler = <T extends object>(origObj: T) => {
     },
     has(target, key) {
       if (key === TRACK_MEMO_SYMBOL) {
-        this[RECORD_OBJECT_AS_USED_PROPERTY]();
+        recordObjectAsUsed(this);
         return true;
       }
       // LIMITATION:
       // We simply record the same as get.
       // This means { a: {} } and { a: {} } is detected as changed,
       // if 'a' in obj is handled.
-      this[RECORD_USAGE_PROPERTY](key);
+      recordUsage(this, key);
       return key in target;
     },
     ownKeys(target) {
-      this[RECORD_USAGE_PROPERTY](OWN_KEYS_SYMBOL);
+      recordUsage(this, OWN_KEYS_SYMBOL);
       return Reflect.ownKeys(target);
     },
   };
