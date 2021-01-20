@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.1.6] - 2021-01-21
+### Changed
+- Fix object frozen afterwards (#9)
+- Some refactors
+
 ## [1.1.5] - 2021-01-20
 ### Changed
 - Fix read-only and non-configurable error (#8)
