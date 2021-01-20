@@ -9,6 +9,7 @@ const AFFECTED_PROPERTY = 'a';
 const RECORD_USAGE_PROPERTY = 'r';
 const RECORD_OBJECT_AS_USED_PROPERTY = 'u';
 const ORIGINAL_OBJECT_PROPERTY = 'o';
+const FROZEN_PROPERTY = 'f';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
@@ -64,6 +65,7 @@ type ProxyHandler<T extends object> = {
   [AFFECTED_PROPERTY]?: Affected;
   [TRACK_OBJECT_PROPERTY]: boolean;
   [ORIGINAL_OBJECT_PROPERTY]: T;
+  [FROZEN_PROPERTY]: boolean;
   [RECORD_USAGE_PROPERTY](key: string | number | symbol): void;
   [RECORD_OBJECT_AS_USED_PROPERTY](): void;
   get(target: T, key: string | number | symbol): unknown;
@@ -76,6 +78,7 @@ type ProxyHandler<T extends object> = {
 const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   const handler: ProxyHandler<T> = {
     [ORIGINAL_OBJECT_PROPERTY]: origObj,
+    [FROZEN_PROPERTY]: frozen,
     [TRACK_OBJECT_PROPERTY]: false, // for trackMemo
     [RECORD_USAGE_PROPERTY](key) {
       if (!this[TRACK_OBJECT_PROPERTY]) {
@@ -151,7 +154,7 @@ export const createDeepProxy = <T>(
   let proxyHandler: ProxyHandler<typeof target> | undefined = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
-  if (!proxyHandler) {
+  if (!proxyHandler || proxyHandler[FROZEN_PROPERTY] !== frozen) {
     proxyHandler = createProxyHandler<T extends object ? T : never>(target, frozen);
     proxyHandler[PROXY_PROPERTY] = new Proxy(
       frozen ? unfreeze(target) : target,
