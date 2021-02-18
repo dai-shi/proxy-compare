@@ -139,8 +139,8 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
  * import { createDeepProxy } from 'proxy-compare';
  *
  * const orginal = { a: "1", c: "2", d: { e: "3" } };
- * const affecteProps = new WeakMap();
- * const proxy = createDeepProxy(orginal, affecteProps);
+ * const affected = new WeakMap();
+ * const proxy = createDeepProxy(orginal, affected);
  *
  * proxy.a // Will mark as used and track its value.
  * // This will update the affected WeakMap with orginal as key
