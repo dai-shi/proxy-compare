@@ -54,22 +54,22 @@ true
 
 create a proxy
 
-This function will create a proxy at top level and proxy nested objects as you access them, in order to keep track of which properties were accessed via get/has proxy handlers:
+This function will create a proxy at top level and proxy nested objects as you access them,
+in order to keep track of which properties were accessed via get/has proxy handlers:
 
 #### Parameters
 
--   `obj` **T** - This is the original object that will be wrapped by a proxy.
--   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** - WeakMap that will hold the tracking of which properties in the proxied object were accessed.
+-   `obj` **T** 
+-   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** 
 -   `proxyCache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>?** 
 
 #### Examples
 
 ```javascript
-import { createDeepProxy } from "proxy-compare";
+import { createDeepProxy } from 'proxy-compare';
 
 const orginal = { a: "1", c: "2", d: { e: "3" } };
 const affecteProps = new WeakMap();
-
 const proxy = createDeepProxy(orginal, affecteProps);
 
 proxy.a // Will mark as used and track its value.
