@@ -54,12 +54,12 @@ true
 
 create a proxy
 
-This function will create a proxy at top level and proxy nested objects as you access them, to keep track of used properties with get/has proxy handlers:
+This function will create a proxy at top level and proxy nested objects as you access them, in order to keep track of which properties were accessed via get/has proxy handlers:
 
 #### Parameters
 
--   `obj` **T** - This is the object that will be wrapped on the proxy.
--   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** - This will hold the tracking of which properties in the proxied object were accessed.
+-   `obj` **T** - This is the original object that will be wrapped by a proxy.
+-   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** - WeakMap that will hold the tracking of which properties in the proxied object were accessed.
 -   `proxyCache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>?** 
 
 #### Examples
