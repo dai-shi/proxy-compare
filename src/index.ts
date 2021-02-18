@@ -120,16 +120,20 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
 };
 
 /**
- * create a proxy
+ * Create a proxy.
  *
  * This function will create a proxy at top level and proxy nested objects as you access them,
  * in order to keep track of which properties were accessed via get/has proxy handlers:
+ *
+ * NOTE: Printing of WeakMap is hard to inspect and not very readable
+ * for this purpose you can use the `affectedToPathList` helper
+ *
  * @param {object} obj - Object that will be wrapped on the proxy.
  * @param {WeakMap<object, unknown>} affected -
  * WeakMap that will hold the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [proxyCache] -
  * WeakMap that will help keep referential identity for proxies.
- * @returns {object} - Object wrapped in a proxy..
+ * @returns {Proxy<object>} - Object wrapped in a proxy..
  *
  * @example
  * import { createDeepProxy } from 'proxy-compare';
