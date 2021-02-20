@@ -9,11 +9,8 @@ describe('object tracking', () => {
     class C {
       prop = 'prop'
     }
-
     const c = new C();
-
     markToTrack(c);
-
     const s1 = { a: { b: 1, c } };
     const a1 = new WeakMap();
     const p1 = createDeepProxy(s1, a1);
