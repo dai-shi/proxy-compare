@@ -216,7 +216,8 @@ type DeepChangedCache = WeakMap<object, {
  * @param {WeakMap<object, unknown>} affected -
  * WeakMap that holds the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [cache] -
- * WeakMap that will help keep referential identity for proxies.
+ * WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
+ * and to avoid infinite loop with circular structures.
  * @returns {boolean} - Boolean indicating if the affected property on the object has changed.
  *
  * @example
