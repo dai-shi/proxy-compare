@@ -88,28 +88,45 @@ Returns **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Gl
 
 ### isDeepChanged
 
-compare two object
+Compare changes on objects.
 
-It will compare only with affected object properties
+This will compare the affected properties on tracked objects inside the proxy
+to check if there were any changes made to it,
+by default if no property was accessed on the proxy it will attempt to do a
+reference equality check for the objects provided (Object.is(a, b)). If you access a property
+on the proxy, then isDeepChanged will only compare the affected properties.
 
 #### Parameters
 
 -   `origObj` **any** 
 -   `nextObj` **any** 
--   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** 
--   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>?** 
+-   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
+-   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
+    and to avoid infinite loop with circular structures.
 -   `mode`   (optional, default `0`)
+-   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The original object to compare.
+-   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the original one.
 
 #### Examples
 
 ```javascript
-import { isDeepChanged } from 'proxy-compare';
+import { createDeepProxy, isDeepChanged } from 'proxy-compare';
 
-const objToCompare = ...;
-const changed = isDeepChanged(obj, objToCompare, affected);
+const orginal = { a: "1", c: "2", d: { e: "3" } };
+const affected = new WeakMap();
+
+const proxy = createDeepProxy(orginal, affected);
+
+proxy.a
+
+isDeepChanged(proxy, { a: "1" }, affected) // false
+
+proxy.a = "2"
+
+isDeepChanged(proxy, { a: "1" }, affected) // true
 ```
 
-Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** 
+Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if the affected property on the object has changed.
 
 ## Projects using this library
 
