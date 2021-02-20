@@ -5,7 +5,7 @@ const noop = (_arg: unknown) => {
 };
 
 describe('object tracking', () => {
-  it('should track class intance', () => {
+  it('should track class instance', () => {
     class C {
       prop = 'prop'
     }
