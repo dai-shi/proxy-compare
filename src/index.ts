@@ -203,16 +203,40 @@ type DeepChangedCache = WeakMap<object, {
 }>;
 
 /**
- * compare two object
+ * Compare changes on objects.
  *
- * It will compare only with affected object properties
+ * This will compare the affected properties on tracked objects inside the proxy
+ * to check if there were any changes made to it,
+ * by default if no property was accessed on the proxy it will attempt to do a
+ * reference equality check for the objects provided (Object.is(a, b)). If you access a property
+ * on the proxy, then isDeepChanged will only compare the affected properties.
+ *
+ * @param {object} obj - The original object to compare.
+ * @param {object} obj - Object to compare with the original one.
+ * @param {WeakMap<object, unknown>} affected -
+ * WeakMap that holds the tracking of which properties in the proxied object were accessed.
+ * @param {WeakMap<object, unknown>} [cache] -
+ * WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
+ * and to avoid infinite loop with circular structures.
+ * @returns {boolean} - Boolean indicating if the affected property on the object has changed.
  *
  * @example
- * import { isDeepChanged } from 'proxy-compare';
+ * import { createDeepProxy, isDeepChanged } from 'proxy-compare';
  *
- * const objToCompare = ...;
- * const changed = isDeepChanged(obj, objToCompare, affected);
+ * const orginal = { a: "1", c: "2", d: { e: "3" } };
+ * const affected = new WeakMap();
+ *
+ * const proxy = createDeepProxy(orginal, affected);
+ *
+ * proxy.a
+ *
+ * isDeepChanged(proxy, { a: "1" }, affected) // false
+ *
+ * proxy.a = "2"
+ *
+ * isDeepChanged(proxy, { a: "1" }, affected) // true
  */
+
 export const isDeepChanged = (
   origObj: unknown,
   nextObj: unknown,
