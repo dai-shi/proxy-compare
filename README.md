@@ -98,14 +98,12 @@ on the proxy, then isDeepChanged will only compare the affected properties.
 
 #### Parameters
 
--   `origObj` **any** 
--   `nextObj` **any** 
+-   `origObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The original object to compare.
+-   `nextObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the original one.
 -   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
 -   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
     and to avoid infinite loop with circular structures.
 -   `mode`   (optional, default `0`)
--   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The original object to compare.
--   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the original one.
 
 #### Examples
 
@@ -119,14 +117,50 @@ const proxy = createDeepProxy(orginal, affected);
 
 proxy.a
 
-isDeepChanged(proxy, { a: "1" }, affected) // false
+isDeepChanged(orginal, { a: "1" }, affected) // false
 
 proxy.a = "2"
 
-isDeepChanged(proxy, { a: "1" }, affected) // true
+isDeepChanged(orginal, { a: "1" }, affected) // true
 ```
 
 Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if the affected property on the object has changed.
+
+### markToTrack
+
+Mark object to be tracked.
+
+This function marks an object that will be passed into `createDeepProxy`
+as marked to track or not. By default only Array and Object are marked to track,
+so this is useful for example to mark a class instance to track or to mark a object
+to be untracked when creating your proxy.
+
+#### Parameters
+
+-   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to mark as tracked or not.
+-   `mark`   (optional, default `true`)
+-   `boolean` **mark** Boolean indicating whether you want to track this object or not.
+
+#### Examples
+
+```javascript
+import { createDeepProxy, markToTrack, isDeepChanged } from 'proxy-compare';
+
+const nested = { e: "3" }
+
+markToTrack(nested, false)
+
+const orginal = { a: "1", c: "2", d: nested };
+const affected = new WeakMap();
+
+const proxy = createDeepProxy(orginal, affected);
+
+proxy.d.e
+
+isDeepChanged(original, { d: { e: "3" } }, affected) // true
+```
+
+Returns **[undefined](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined)** No return.
 
 ## Projects using this library
 
