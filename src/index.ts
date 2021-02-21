@@ -331,7 +331,6 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
  *
  * isDeepChanged(original, { d: { e: "3" } }, affected) // true
  */
-// mark object to track or not (even if it is not plain)
 export const markToTrack = (obj: object, mark = true) => {
   objectsToTrack.set(obj, mark);
 };
