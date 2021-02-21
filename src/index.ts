@@ -211,8 +211,8 @@ type DeepChangedCache = WeakMap<object, {
  * reference equality check for the objects provided (Object.is(a, b)). If you access a property
  * on the proxy, then isDeepChanged will only compare the affected properties.
  *
- * @param {object} obj - The original object to compare.
- * @param {object} obj - Object to compare with the original one.
+ * @param {object} origObj - The original object to compare.
+ * @param {object} nextObj - Object to compare with the original one.
  * @param {WeakMap<object, unknown>} affected -
  * WeakMap that holds the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [cache] -
