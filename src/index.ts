@@ -312,7 +312,7 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
  * to be untracked when creating your proxy.
  *
  * @param {object} obj - Object to mark as tracked or not.
- * @param {mark} boolean - Boolean indicating wether you want to track this object or not..
+ * @param {mark} boolean - Boolean indicating whether you want to track this object or not.
  * @returns {undefined} - No return.
  *
  * @example
