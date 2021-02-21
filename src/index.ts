@@ -211,8 +211,8 @@ type DeepChangedCache = WeakMap<object, {
  * reference equality check for the objects provided (Object.is(a, b)). If you access a property
  * on the proxy, then isDeepChanged will only compare the affected properties.
  *
- * @param {object} obj - The original object to compare.
- * @param {object} obj - Object to compare with the original one.
+ * @param {object} origObj - The original object to compare.
+ * @param {object} nextObj - Object to compare with the original one.
  * @param {WeakMap<object, unknown>} affected -
  * WeakMap that holds the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [cache] -
@@ -230,11 +230,11 @@ type DeepChangedCache = WeakMap<object, {
  *
  * proxy.a
  *
- * isDeepChanged(proxy, { a: "1" }, affected) // false
+ * isDeepChanged(orginal, { a: "1" }, affected) // false
  *
  * proxy.a = "2"
  *
- * isDeepChanged(proxy, { a: "1" }, affected) // true
+ * isDeepChanged(orginal, { a: "1" }, affected) // true
  */
 
 export const isDeepChanged = (
@@ -303,7 +303,34 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
   return null;
 };
 
-// mark object to track or not (even if it is not plain)
+/**
+ * Mark object to be tracked.
+ *
+ * This function marks an object that will be passed into `createDeepProxy`
+ * as marked to track or not. By default only Array and Object are marked to track,
+ * so this is useful for example to mark a class instance to track or to mark a object
+ * to be untracked when creating your proxy.
+ *
+ * @param {object} obj - Object to mark as tracked or not.
+ * @param {mark} boolean - Boolean indicating whether you want to track this object or not.
+ * @returns {undefined} - No return.
+ *
+ * @example
+ * import { createDeepProxy, markToTrack, isDeepChanged } from 'proxy-compare';
+ *
+ * const nested = { e: "3" }
+ *
+ * markToTrack(nested, false)
+ *
+ * const orginal = { a: "1", c: "2", d: nested };
+ * const affected = new WeakMap();
+ *
+ * const proxy = createDeepProxy(orginal, affected);
+ *
+ * proxy.d.e
+ *
+ * isDeepChanged(original, { d: { e: "3" } }, affected) // true
+ */
 export const markToTrack = (obj: object, mark = true) => {
   objectsToTrack.set(obj, mark);
 };
