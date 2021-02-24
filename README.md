@@ -71,16 +71,16 @@ for this purpose you can use the `affectedToPathList` helper.
 ```javascript
 import { createDeepProxy } from 'proxy-compare';
 
-const orginal = { a: "1", c: "2", d: { e: "3" } };
+const original = { a: "1", c: "2", d: { e: "3" } };
 const affected = new WeakMap();
-const proxy = createDeepProxy(orginal, affected);
+const proxy = createDeepProxy(original, affected);
 
 proxy.a // Will mark as used and track its value.
-// This will update the affected WeakMap with orginal as key
+// This will update the affected WeakMap with original as key
 // and a Set with "a"
 
 proxy.d // Will mark "d" as accessed to track and proxy itself ({ e: "3" }).
-// This will update the affected WeakMap with orginal as key
+// This will update the affected WeakMap with original as key
 // and a Set with "d"
 ```
 
@@ -110,21 +110,48 @@ on the proxy, then isDeepChanged will only compare the affected properties.
 ```javascript
 import { createDeepProxy, isDeepChanged } from 'proxy-compare';
 
-const orginal = { a: "1", c: "2", d: { e: "3" } };
+const original = { a: "1", c: "2", d: { e: "3" } };
 const affected = new WeakMap();
 
-const proxy = createDeepProxy(orginal, affected);
+const proxy = createDeepProxy(original, affected);
 
 proxy.a
 
-isDeepChanged(orginal, { a: "1" }, affected) // false
+isDeepChanged(original, { a: "1" }, affected) // false
 
 proxy.a = "2"
 
-isDeepChanged(orginal, { a: "1" }, affected) // true
+isDeepChanged(original, { a: "1" }, affected) // true
 ```
 
 Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if the affected property on the object has changed.
+
+### getUntrackedObject
+
+Unwrap proxy to get the original object.
+
+Used to retrieve the original object used to create the proxy instance with `createDeepProxy`.
+
+#### Parameters
+
+-   `obj` **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)>**  The proxy wrapper of the originial object.
+
+#### Examples
+
+```javascript
+import { createDeepProxy, getUntrackedObject } from 'proxy-compare';
+
+const original = { a: "1", c: "2", d: { e: "3" } };
+const affected = new WeakMap();
+
+const proxy = createDeepProxy(original, affected);
+const originalFromProxy = getUntrackedObject(proxy)
+
+Obejct.is(original, originalFromProxy) // true
+isDeepChanged(original, originalFromProxy, affected) // false
+```
+
+Returns **([object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object) | null)** Return either the unwrapped object if exists.
 
 ### markToTrack
 
@@ -150,10 +177,10 @@ const nested = { e: "3" }
 
 markToTrack(nested, false)
 
-const orginal = { a: "1", c: "2", d: nested };
+const original = { a: "1", c: "2", d: nested };
 const affected = new WeakMap();
 
-const proxy = createDeepProxy(orginal, affected);
+const proxy = createDeepProxy(original, affected);
 
 proxy.d.e
 
