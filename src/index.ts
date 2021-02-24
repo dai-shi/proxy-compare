@@ -138,16 +138,16 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
  * @example
  * import { createDeepProxy } from 'proxy-compare';
  *
- * const orginal = { a: "1", c: "2", d: { e: "3" } };
+ * const original = { a: "1", c: "2", d: { e: "3" } };
  * const affected = new WeakMap();
- * const proxy = createDeepProxy(orginal, affected);
+ * const proxy = createDeepProxy(original, affected);
  *
  * proxy.a // Will mark as used and track its value.
- * // This will update the affected WeakMap with orginal as key
+ * // This will update the affected WeakMap with original as key
  * // and a Set with "a"
  *
  * proxy.d // Will mark "d" as accessed to track and proxy itself ({ e: "3" }).
- * // This will update the affected WeakMap with orginal as key
+ * // This will update the affected WeakMap with original as key
  * // and a Set with "d"
  */
 export const createDeepProxy = <T>(
@@ -223,18 +223,18 @@ type DeepChangedCache = WeakMap<object, {
  * @example
  * import { createDeepProxy, isDeepChanged } from 'proxy-compare';
  *
- * const orginal = { a: "1", c: "2", d: { e: "3" } };
+ * const original = { a: "1", c: "2", d: { e: "3" } };
  * const affected = new WeakMap();
  *
- * const proxy = createDeepProxy(orginal, affected);
+ * const proxy = createDeepProxy(original, affected);
  *
  * proxy.a
  *
- * isDeepChanged(orginal, { a: "1" }, affected) // false
+ * isDeepChanged(original, { a: "1" }, affected) // false
  *
  * proxy.a = "2"
  *
- * isDeepChanged(orginal, { a: "1" }, affected) // true
+ * isDeepChanged(original, { a: "1" }, affected) // true
  */
 
 export const isDeepChanged = (
@@ -295,7 +295,26 @@ export const trackMemo = (obj: unknown) => {
   return false;
 };
 
-// get original object from proxy
+/**
+ * Unwrap proxy to get the original object.
+ *
+ * Used to retrieve the original object used to create the proxy instance with `createDeepProxy`.
+ *
+ * @param {Proxy<object>} obj -  The proxy wrapper of the originial object.
+ * @returns {object | null} - Return either the unwrapped object if exists.
+ *
+ * @example
+ * import { createDeepProxy, getUntrackedObject } from 'proxy-compare';
+ *
+ * const original = { a: "1", c: "2", d: { e: "3" } };
+ * const affected = new WeakMap();
+ *
+ * const proxy = createDeepProxy(original, affected);
+ * const originalFromProxy = getUntrackedObject(proxy)
+ *
+ * Obejct.is(original, originalFromProxy) // true
+ * isDeepChanged(original, originalFromProxy, affected) // false
+ */
 export const getUntrackedObject = <T>(obj: T): T | null => {
   if (isObjectToTrack(obj)) {
     return (obj as { [GET_ORIGINAL_SYMBOL]?: T })[GET_ORIGINAL_SYMBOL] || null;
@@ -322,10 +341,10 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
  *
  * markToTrack(nested, false)
  *
- * const orginal = { a: "1", c: "2", d: nested };
+ * const original = { a: "1", c: "2", d: nested };
  * const affected = new WeakMap();
  *
- * const proxy = createDeepProxy(orginal, affected);
+ * const proxy = createDeepProxy(original, affected);
  *
  * proxy.d.e
  *
