@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## [2.0.0] - 2021-05-15
 ### Changed
 - Drop mode in isDeepChanged [BREAKING CHANGE] (#18)
 - Rename exported functions [BREAKING CHANGE] (#19)
