@@ -1,10 +1,4 @@
-import {
-  createDeepProxy,
-  isDeepChanged,
-  MODE_ASSUME_UNCHANGED_IF_UNAFFECTED,
-} from '../src/index';
-
-const MODE_DEFAULT = MODE_ASSUME_UNCHANGED_IF_UNAFFECTED;
+import { createDeepProxy, isDeepChanged } from '../src/index';
 
 const noop = (_arg: unknown) => {
   // do nothing
@@ -16,9 +10,9 @@ describe('shallow object spec', () => {
     const a1 = new WeakMap();
     const p1 = createDeepProxy(s1, a1);
     noop(p1);
-    expect(isDeepChanged(s1, { a: 'a', b: 'b' }, a1, undefined, MODE_DEFAULT)).toBe(false);
-    expect(isDeepChanged(s1, { a: 'a2', b: 'b' }, a1, undefined, MODE_DEFAULT)).toBe(false);
-    expect(isDeepChanged(s1, { a: 'a', b: 'b2' }, a1, undefined, MODE_DEFAULT)).toBe(false);
+    expect(isDeepChanged(s1, { a: 'a', b: 'b' }, a1, undefined)).toBe(true);
+    expect(isDeepChanged(s1, { a: 'a2', b: 'b' }, a1, undefined)).toBe(true);
+    expect(isDeepChanged(s1, { a: 'a', b: 'b2' }, a1, undefined)).toBe(true);
   });
 
   it('one property access', () => {
