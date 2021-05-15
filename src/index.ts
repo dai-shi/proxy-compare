@@ -53,23 +53,23 @@ const unfreeze = (obj: object) => {
   return Object.create(getProto(obj), descriptors);
 };
 
-type Affected = WeakMap<object, Set<string | number | symbol>>;
+type Affected = WeakMap<object, Set<string | symbol>>;
 type ProxyCache<T extends object> = WeakMap<object, ProxyHandler<T>>;
 type ProxyHandler<T extends object> = {
   [FROZEN_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object>;
   [AFFECTED_PROPERTY]?: Affected;
-  get(target: T, key: string | number | symbol): unknown;
-  has(target: T, key: string | number | symbol): boolean;
-  ownKeys(target: T): (string | number | symbol)[];
-  set?(target: T, key: string | number | symbol, value: unknown): boolean;
-  deleteProperty?(target: T, key: string | number | symbol): boolean;
+  get(target: T, key: string | symbol): unknown;
+  has(target: T, key: string | symbol): boolean;
+  ownKeys(target: T): (string | symbol)[];
+  set?(target: T, key: string | symbol, value: unknown): boolean;
+  deleteProperty?(target: T, key: string | symbol): boolean;
 };
 
 const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   let trackObject = false; // for trackMemo
-  const recordUsage = (h: ProxyHandler<T>, key: string | number | symbol) => {
+  const recordUsage = (h: ProxyHandler<T>, key: string | symbol) => {
     if (!trackObject) {
       let used = (h[AFFECTED_PROPERTY] as Affected).get(origObj);
       if (!used) {
@@ -344,8 +344,8 @@ export const affectedToPathList = (
   obj: unknown,
   affected: WeakMap<object, unknown>,
 ) => {
-  const list: (string | number | symbol)[][] = [];
-  const walk = (x: unknown, path?: (string | number | symbol)[]) => {
+  const list: (string | symbol)[][] = [];
+  const walk = (x: unknown, path?: (string | symbol)[]) => {
     const used = (affected as Affected).get(x as object);
     if (used) {
       used.forEach((key) => {

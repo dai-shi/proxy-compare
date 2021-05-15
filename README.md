@@ -62,9 +62,9 @@ for this purpose you can use the `affectedToPathList` helper.
 
 #### Parameters
 
--   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object that will be wrapped on the proxy.
--   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that will hold the tracking of which properties in the proxied object were accessed.
--   `proxyCache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that will help keep referential identity for proxies.
+*   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object that will be wrapped on the proxy.
+*   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that will hold the tracking of which properties in the proxied object were accessed.
+*   `proxyCache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that will help keep referential identity for proxies.
 
 #### Examples
 
@@ -84,7 +84,7 @@ proxy.d // Will mark "d" as accessed to track and proxy itself ({ e: "3" }).
 // and a Set with "d"
 ```
 
-Returns **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)>** Object wrapped in a proxy.
+Returns **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)>** Object wrapped in a proxy.
 
 ### isChanged
 
@@ -98,10 +98,10 @@ on the proxy, then isChanged will only compare the affected properties.
 
 #### Parameters
 
--   `origObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The original object to compare.
--   `nextObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the original one.
--   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
--   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
+*   `origObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The original object to compare.
+*   `nextObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the original one.
+*   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
+*   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
     and to avoid infinite loop with circular structures.
 
 #### Examples
@@ -133,7 +133,7 @@ Used to retrieve the original object used to create the proxy instance with `cre
 
 #### Parameters
 
--   `obj` **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)&lt;[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)>**  The proxy wrapper of the originial object.
+*   `obj` **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)>** The proxy wrapper of the originial object.
 
 #### Examples
 
@@ -163,9 +163,9 @@ to be untracked when creating your proxy.
 
 #### Parameters
 
--   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to mark as tracked or not.
--   `mark`   (optional, default `true`)
--   `boolean` **mark** Boolean indicating whether you want to track this object or not.
+*   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to mark as tracked or not.
+*   `mark`   (optional, default `true`)
+*   `boolean` **mark** Boolean indicating whether you want to track this object or not.
 
 #### Examples
 
@@ -190,14 +190,14 @@ Returns **[undefined](https://developer.mozilla.org/docs/Web/JavaScript/Referenc
 
 ## Projects using this library
 
--   [react-tracked](https://github.com/dai-shi/react-tracked)
--   [reactive-react-redux](https://github.com/dai-shi/reactive-react-redux)
--   [svelte3-redux](https://github.com/dai-shi/svelte3-redux)
--   [proxy-memoize](https://github.com/dai-shi/proxy-memoize)
--   [valtio](https://github.com/pmndrs/valtio)
+*   [react-tracked](https://github.com/dai-shi/react-tracked)
+*   [reactive-react-redux](https://github.com/dai-shi/reactive-react-redux)
+*   [svelte3-redux](https://github.com/dai-shi/svelte3-redux)
+*   [proxy-memoize](https://github.com/dai-shi/proxy-memoize)
+*   [valtio](https://github.com/pmndrs/valtio)
 
 ## Similar libraries
 
--   [proxyequal](https://www.npmjs.com/package/proxyequal)
--   [proxy-state-tree](https://www.npmjs.com/package/proxy-state-tree)
--   [proxy-watcher](https://www.npmjs.com/package/proxy-watcher)
+*   [proxyequal](https://www.npmjs.com/package/proxyequal)
+*   [proxy-state-tree](https://www.npmjs.com/package/proxy-state-tree)
+*   [proxy-watcher](https://www.npmjs.com/package/proxy-watcher)
