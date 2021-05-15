@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- Drop mode in isDeepChanged [BREAKING CHANGE]
 
 ## [1.1.6] - 2021-01-21
 ### Changed

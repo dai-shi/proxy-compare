@@ -186,17 +186,6 @@ const isOwnKeysChanged = (origObj: object, nextObj: object) => {
     || origKeys.some((k, i) => k !== nextKeys[i]);
 };
 
-export const MODE_ASSUME_UNCHANGED_IF_UNAFFECTED = /*   */ 0b00001;
-export const MODE_IGNORE_REF_EQUALITY = /*              */ 0b00010;
-
-const IN_DEEP_SHIFT = 2;
-export const MODE_ASSUME_UNCHANGED_IF_UNAFFECTED_IN_DEEP = (
-  MODE_ASSUME_UNCHANGED_IF_UNAFFECTED << IN_DEEP_SHIFT
-);
-export const MODE_IGNORE_REF_EQUALITY_IN_DEEP = (
-  MODE_IGNORE_REF_EQUALITY << IN_DEEP_SHIFT
-);
-
 type DeepChangedCache = WeakMap<object, {
   [NEXT_OBJECT_PROPERTY]: object;
   [CHANGED_PROPERTY]: boolean;
@@ -242,17 +231,14 @@ export const isDeepChanged = (
   nextObj: unknown,
   affected: WeakMap<object, unknown>,
   cache?: WeakMap<object, unknown>,
-  mode = 0,
 ): boolean => {
-  if (Object.is(origObj, nextObj) && (
-    !isObject(origObj) || (mode & MODE_IGNORE_REF_EQUALITY) === 0)
-  ) {
+  if (Object.is(origObj, nextObj)) {
     return false;
   }
   if (!isObject(origObj) || !isObject(nextObj)) return true;
   const used = (affected as Affected).get(origObj);
-  if (!used) return (mode & MODE_ASSUME_UNCHANGED_IF_UNAFFECTED) === 0;
-  if (cache && (mode & MODE_IGNORE_REF_EQUALITY) === 0) {
+  if (!used) return true;
+  if (cache) {
     const hit = (cache as DeepChangedCache).get(origObj);
     if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
       return hit[CHANGED_PROPERTY];
@@ -272,13 +258,12 @@ export const isDeepChanged = (
         (nextObj as any)[key],
         affected,
         cache,
-        ((mode >>> IN_DEEP_SHIFT) << IN_DEEP_SHIFT) | (mode >>> IN_DEEP_SHIFT),
       );
     if (c === true || c === false) changed = c;
     if (changed) break;
   }
-  if (changed === null) changed = (mode & MODE_ASSUME_UNCHANGED_IF_UNAFFECTED) === 0;
-  if (cache && (mode & MODE_IGNORE_REF_EQUALITY) === 0) {
+  if (changed === null) changed = true;
+  if (cache) {
     cache.set(origObj, {
       [NEXT_OBJECT_PROPERTY]: nextObj,
       [CHANGED_PROPERTY]: changed,
