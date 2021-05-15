@@ -90,7 +90,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
         return origObj;
       }
       recordUsage(this, key);
-      return createDeepProxy(
+      return createProxy(
         (target as any)[key],
         (this[AFFECTED_PROPERTY] as Affected),
         this[PROXY_CACHE_PROPERTY],
@@ -136,11 +136,11 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
  * @returns {Proxy<object>} - Object wrapped in a proxy.
  *
  * @example
- * import { createDeepProxy } from 'proxy-compare';
+ * import { createProxy } from 'proxy-compare';
  *
  * const original = { a: "1", c: "2", d: { e: "3" } };
  * const affected = new WeakMap();
- * const proxy = createDeepProxy(original, affected);
+ * const proxy = createProxy(original, affected);
  *
  * proxy.a // Will mark as used and track its value.
  * // This will update the affected WeakMap with original as key
@@ -150,7 +150,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
  * // This will update the affected WeakMap with original as key
  * // and a Set with "d"
  */
-export const createDeepProxy = <T>(
+export const createProxy = <T>(
   obj: T,
   affected: WeakMap<object, unknown>,
   proxyCache?: WeakMap<object, unknown>,
@@ -186,7 +186,7 @@ const isOwnKeysChanged = (origObj: object, nextObj: object) => {
     || origKeys.some((k, i) => k !== nextKeys[i]);
 };
 
-type DeepChangedCache = WeakMap<object, {
+type ChangedCache = WeakMap<object, {
   [NEXT_OBJECT_PROPERTY]: object;
   [CHANGED_PROPERTY]: boolean;
 }>;
@@ -198,7 +198,7 @@ type DeepChangedCache = WeakMap<object, {
  * to check if there were any changes made to it,
  * by default if no property was accessed on the proxy it will attempt to do a
  * reference equality check for the objects provided (Object.is(a, b)). If you access a property
- * on the proxy, then isDeepChanged will only compare the affected properties.
+ * on the proxy, then isChanged will only compare the affected properties.
  *
  * @param {object} origObj - The original object to compare.
  * @param {object} nextObj - Object to compare with the original one.
@@ -210,23 +210,23 @@ type DeepChangedCache = WeakMap<object, {
  * @returns {boolean} - Boolean indicating if the affected property on the object has changed.
  *
  * @example
- * import { createDeepProxy, isDeepChanged } from 'proxy-compare';
+ * import { createProxy, isChanged } from 'proxy-compare';
  *
  * const original = { a: "1", c: "2", d: { e: "3" } };
  * const affected = new WeakMap();
  *
- * const proxy = createDeepProxy(original, affected);
+ * const proxy = createProxy(original, affected);
  *
  * proxy.a
  *
- * isDeepChanged(original, { a: "1" }, affected) // false
+ * isChanged(original, { a: "1" }, affected) // false
  *
  * proxy.a = "2"
  *
- * isDeepChanged(original, { a: "1" }, affected) // true
+ * isChanged(original, { a: "1" }, affected) // true
  */
 
-export const isDeepChanged = (
+export const isChanged = (
   origObj: unknown,
   nextObj: unknown,
   affected: WeakMap<object, unknown>,
@@ -239,12 +239,12 @@ export const isDeepChanged = (
   const used = (affected as Affected).get(origObj);
   if (!used) return true;
   if (cache) {
-    const hit = (cache as DeepChangedCache).get(origObj);
+    const hit = (cache as ChangedCache).get(origObj);
     if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
       return hit[CHANGED_PROPERTY];
     }
     // for object with cycles
-    (cache as DeepChangedCache).set(origObj, {
+    (cache as ChangedCache).set(origObj, {
       [NEXT_OBJECT_PROPERTY]: nextObj,
       [CHANGED_PROPERTY]: false,
     });
@@ -253,7 +253,7 @@ export const isDeepChanged = (
   // eslint-disable-next-line no-restricted-syntax
   for (const key of used) {
     const c = key === OWN_KEYS_SYMBOL ? isOwnKeysChanged(origObj, nextObj)
-      : isDeepChanged(
+      : isChanged(
         (origObj as any)[key],
         (nextObj as any)[key],
         affected,
@@ -283,24 +283,24 @@ export const trackMemo = (obj: unknown) => {
 /**
  * Unwrap proxy to get the original object.
  *
- * Used to retrieve the original object used to create the proxy instance with `createDeepProxy`.
+ * Used to retrieve the original object used to create the proxy instance with `createProxy`.
  *
  * @param {Proxy<object>} obj -  The proxy wrapper of the originial object.
  * @returns {object | null} - Return either the unwrapped object if exists.
  *
  * @example
- * import { createDeepProxy, getUntrackedObject } from 'proxy-compare';
+ * import { createProxy, getUntracked } from 'proxy-compare';
  *
  * const original = { a: "1", c: "2", d: { e: "3" } };
  * const affected = new WeakMap();
  *
- * const proxy = createDeepProxy(original, affected);
- * const originalFromProxy = getUntrackedObject(proxy)
+ * const proxy = createProxy(original, affected);
+ * const originalFromProxy = getUntracked(proxy)
  *
  * Obejct.is(original, originalFromProxy) // true
- * isDeepChanged(original, originalFromProxy, affected) // false
+ * isChanged(original, originalFromProxy, affected) // false
  */
-export const getUntrackedObject = <T>(obj: T): T | null => {
+export const getUntracked = <T>(obj: T): T | null => {
   if (isObjectToTrack(obj)) {
     return (obj as { [GET_ORIGINAL_SYMBOL]?: T })[GET_ORIGINAL_SYMBOL] || null;
   }
@@ -310,7 +310,7 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
 /**
  * Mark object to be tracked.
  *
- * This function marks an object that will be passed into `createDeepProxy`
+ * This function marks an object that will be passed into `createProxy`
  * as marked to track or not. By default only Array and Object are marked to track,
  * so this is useful for example to mark a class instance to track or to mark a object
  * to be untracked when creating your proxy.
@@ -320,7 +320,7 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
  * @returns {undefined} - No return.
  *
  * @example
- * import { createDeepProxy, markToTrack, isDeepChanged } from 'proxy-compare';
+ * import { createProxy, markToTrack, isChanged } from 'proxy-compare';
  *
  * const nested = { e: "3" }
  *
@@ -329,11 +329,11 @@ export const getUntrackedObject = <T>(obj: T): T | null => {
  * const original = { a: "1", c: "2", d: nested };
  * const affected = new WeakMap();
  *
- * const proxy = createDeepProxy(original, affected);
+ * const proxy = createProxy(original, affected);
  *
  * proxy.d.e
  *
- * isDeepChanged(original, { d: { e: "3" } }, affected) // true
+ * isChanged(original, { d: { e: "3" } }, affected) // true
  */
 export const markToTrack = (obj: object, mark = true) => {
   objectsToTrack.set(obj, mark);

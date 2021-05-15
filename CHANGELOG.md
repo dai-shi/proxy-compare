@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 ### Changed
-- Drop mode in isDeepChanged [BREAKING CHANGE]
+- Drop mode in isDeepChanged [BREAKING CHANGE] (#18)
+- Rename exported functions [BREAKING CHANGE] (#19)
 
 ## [1.1.6] - 2021-01-21
 ### Changed
