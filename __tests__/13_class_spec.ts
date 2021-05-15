@@ -1,8 +1,4 @@
-import {
-  createDeepProxy,
-  isDeepChanged,
-  markToTrack,
-} from '../src/index';
+import { createProxy, isChanged, markToTrack } from '../src/index';
 
 const noop = (_arg: unknown) => {
   // do nothing
@@ -18,11 +14,11 @@ describe('class spec', () => {
     const s1 = new C();
     markToTrack(s1);
     const a1 = new WeakMap();
-    const p1 = createDeepProxy(s1, a1, proxyCache);
+    const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a);
-    expect(isDeepChanged(s1, s1, a1)).toBe(false);
-    expect(isDeepChanged(s1, { a: 1 }, a1)).toBe(false);
-    expect(isDeepChanged(s1, { a: 2 }, a1)).toBe(true);
+    expect(isChanged(s1, s1, a1)).toBe(false);
+    expect(isChanged(s1, { a: 1 }, a1)).toBe(false);
+    expect(isChanged(s1, { a: 2 }, a1)).toBe(true);
     expect(Object.getPrototypeOf(p1) === C.prototype).toBe(true);
   });
 
@@ -32,11 +28,11 @@ describe('class spec', () => {
     Object.freeze(s1);
     markToTrack(s1);
     const a1 = new WeakMap();
-    const p1 = createDeepProxy(s1, a1, proxyCache);
+    const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a);
-    expect(isDeepChanged(s1, s1, a1)).toBe(false);
-    expect(isDeepChanged(s1, { a: 1 }, a1)).toBe(false);
-    expect(isDeepChanged(s1, { a: 2 }, a1)).toBe(true);
+    expect(isChanged(s1, s1, a1)).toBe(false);
+    expect(isChanged(s1, { a: 1 }, a1)).toBe(false);
+    expect(isChanged(s1, { a: 2 }, a1)).toBe(true);
     expect(Object.getPrototypeOf(p1) === C.prototype).toBe(true);
   });
 });
