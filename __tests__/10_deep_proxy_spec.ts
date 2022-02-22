@@ -1,4 +1,4 @@
-import { createProxy, isChanged } from '../src/index';
+import { createProxy, isChanged, affectedToPathList } from '../src/index';
 
 const noop = (_arg: unknown) => {
   // do nothing
@@ -181,6 +181,7 @@ describe('special objects spec', () => {
     const s3: any = { a: 'a2' };
     s3.self = s3;
     expect(isChanged(s1, s3, a1, c1)).toBe(true);
+    expect(affectedToPathList(s1, a1)).toEqual([['a']]);
   });
 
   it('object with cycles 2', () => {
@@ -196,6 +197,7 @@ describe('special objects spec', () => {
     const s2: any = { a: { b: 'b' } };
     s2.self = s2;
     expect(isChanged(s1, s2, a1, c1)).toBe(true);
+    expect(affectedToPathList(s1, a1)).toEqual([['a']]);
   });
 
   it('frozen object', () => {
