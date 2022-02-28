@@ -6,7 +6,7 @@ const noop = (_arg: unknown) => {
 
 describe('class spec', () => {
   class C {
-    a = 1
+    a = 1;
   }
 
   it('normal', () => {

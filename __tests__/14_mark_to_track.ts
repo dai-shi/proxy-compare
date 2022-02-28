@@ -7,7 +7,7 @@ const noop = (_arg: unknown) => {
 describe('object tracking', () => {
   it('should track class instance', () => {
     class C {
-      prop = 'prop'
+      prop = 'prop';
     }
     const c = new C();
     markToTrack(c);
