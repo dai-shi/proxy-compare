@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+
+## [2.0.3] - 2022-02-28
 ### Changed
 - Fix affectedToPathList to avoid maximum call stack size exceeded error (#32)
 
