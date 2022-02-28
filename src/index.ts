@@ -345,7 +345,15 @@ export const affectedToPathList = (
   affected: WeakMap<object, unknown>,
 ) => {
   const list: (string | symbol)[][] = [];
+  const seen = new WeakSet();
   const walk = (x: unknown, path?: (string | symbol)[]) => {
+    if (seen.has(x as object)) {
+      // for object with cycles
+      return;
+    }
+    if (isObject(x)) {
+      seen.add(x);
+    }
     const used = (affected as Affected).get(x as object);
     if (used) {
       used.forEach((key) => {
