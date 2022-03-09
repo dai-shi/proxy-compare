@@ -182,8 +182,19 @@ export const createProxy = <T>(
 const isOwnKeysChanged = (origObj: object, nextObj: object) => {
   const origKeys = Reflect.ownKeys(origObj);
   const nextKeys = Reflect.ownKeys(nextObj);
-  return origKeys.length !== nextKeys.length
+  const simpleCheckResult = origKeys.length !== nextKeys.length
     || origKeys.some((k, i) => k !== nextKeys[i]);
+
+  if (simpleCheckResult) {
+    return true;
+  }
+
+  const fakeAffected = new Map();
+  const used = new Set();
+  fakeAffected.set(origObj, used);
+  origKeys.forEach((k) => used.add(k));
+
+  return isChanged(origObj, nextObj, fakeAffected);
 };
 
 type ChangedCache = WeakMap<object, {

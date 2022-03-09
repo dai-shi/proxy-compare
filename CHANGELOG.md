@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- Fix isOwnKeysChanged not check the value
 
 ## [2.0.3] - 2022-02-28
 ### Changed

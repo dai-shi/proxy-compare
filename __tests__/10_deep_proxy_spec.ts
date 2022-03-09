@@ -134,7 +134,7 @@ describe('keys spec', () => {
     const p1 = createProxy(s1, a1);
     noop(Object.keys(p1));
     expect(isChanged(s1, { a: s1.a, c: 'c' }, a1)).toBe(false);
-    expect(isChanged(s1, { a: { b: 'b' }, c: 'c' }, a1)).toBe(false);
+    expect(isChanged(s1, { a: { b: 'b' }, c: 'c' }, a1)).toBe(true);
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(true);
     expect(isChanged(s1, { a: s1.a, c: 'c', d: 'd' }, a1)).toBe(true);
   });
@@ -148,7 +148,7 @@ describe('keys spec', () => {
       noop(k);
     }
     expect(isChanged(s1, { a: s1.a, c: 'c' }, a1)).toBe(false);
-    expect(isChanged(s1, { a: { b: 'b' }, c: 'c' }, a1)).toBe(false);
+    expect(isChanged(s1, { a: { b: 'b' }, c: 'c' }, a1)).toBe(true);
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(true);
     expect(isChanged(s1, { a: s1.a, c: 'c', d: 'd' }, a1)).toBe(true);
   });
