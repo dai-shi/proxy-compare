@@ -62,6 +62,7 @@ type ProxyHandler<T extends object> = {
   [AFFECTED_PROPERTY]?: Affected;
   get(target: T, key: string | symbol): unknown;
   has(target: T, key: string | symbol): boolean;
+  getOwnPropertyDescriptor(target: T, key: string | symbol): PropertyDescriptor | undefined;
   ownKeys(target: T): (string | symbol)[];
   set?(target: T, key: string | symbol, value: unknown): boolean;
   deleteProperty?(target: T, key: string | symbol): boolean;
@@ -69,14 +70,16 @@ type ProxyHandler<T extends object> = {
 
 const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   let trackObject = false; // for trackMemo
-  const recordUsage = (h: ProxyHandler<T>, key: string | symbol) => {
+  const recordUsage = (h: ProxyHandler<T>, key: string | symbol, skipWithOwnKeys?: boolean) => {
     if (!trackObject) {
       let used = (h[AFFECTED_PROPERTY] as Affected).get(origObj);
       if (!used) {
         used = new Set();
         (h[AFFECTED_PROPERTY] as Affected).set(origObj, used);
       }
-      used.add(key);
+      if (!skipWithOwnKeys || key === OWN_KEYS_SYMBOL || !used.has(OWN_KEYS_SYMBOL)) {
+        used.add(key);
+      }
     }
   };
   const recordObjectAsUsed = (h: ProxyHandler<T>) => {
@@ -107,6 +110,14 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
       // if 'a' in obj is handled.
       recordUsage(this, key);
       return key in target;
+    },
+    getOwnPropertyDescriptor(target, key) {
+      // LIMITATION:
+      // We simply record the same as get.
+      // This means { a: {} } and { a: {} } is detected as changed,
+      // if obj.getOwnPropertyDescriptor('a')) is handled.
+      recordUsage(this, key, true);
+      return Object.getOwnPropertyDescriptor(target, key);
     },
     ownKeys(target) {
       recordUsage(this, OWN_KEYS_SYMBOL);
