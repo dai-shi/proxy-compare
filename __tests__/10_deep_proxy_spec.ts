@@ -162,6 +162,17 @@ describe('keys spec', () => {
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(false);
     expect(isChanged(s1, { c: 'c', d: 'd' }, a1)).toBe(true);
   });
+
+  it('hasOwnProperty', () => {
+    const s1 = { a: { b: 'b' }, c: 'c' };
+    const a1 = new WeakMap();
+    const p1 = createProxy(s1, a1);
+    // eslint-disable-next-line no-prototype-builtins
+    noop(p1.hasOwnProperty('a'));
+    expect(isChanged(s1, { a: s1.a, c: 'c' }, a1)).toBe(false);
+    expect(isChanged(s1, { a: s1.a }, a1)).toBe(false);
+    expect(isChanged(s1, { c: 'c', d: 'd' }, a1)).toBe(true);
+  });
 });
 
 describe('special objects spec', () => {
