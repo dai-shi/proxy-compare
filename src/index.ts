@@ -77,7 +77,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
         used = new Set();
         (h[AFFECTED_PROPERTY] as Affected).set(origObj, used);
       }
-      if (!skipWithOwnKeys || key === OWN_KEYS_SYMBOL || !used.has(OWN_KEYS_SYMBOL)) {
+      if (!skipWithOwnKeys || !used.has(OWN_KEYS_SYMBOL)) {
         used.add(key);
       }
     }
