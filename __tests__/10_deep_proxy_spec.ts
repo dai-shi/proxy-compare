@@ -172,6 +172,9 @@ describe('keys spec', () => {
     expect(isChanged(s1, { a: s1.a, c: 'c' }, a1)).toBe(false);
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(false);
     expect(isChanged(s1, { c: 'c', d: 'd' }, a1)).toBe(true);
+    // NOTE: due to the way this is implemented, changing the value of 'a' causes 
+    // a change, even thought we only used `hasOwnProperty` above
+    expect(isChanged(s1, { a: null, c: 'c' }, a1)).toBe(true);
   });
 });
 
