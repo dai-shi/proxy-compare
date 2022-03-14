@@ -104,18 +104,16 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
         recordObjectAsUsed(this);
         return true;
       }
-      // LIMITATION:
-      // We simply record the same as get.
+      // LIMITATION: We simply record the same as `get`.
       // This means { a: {} } and { a: {} } is detected as changed,
-      // if 'a' in obj is handled.
+      // if `'a' in obj` is handled.
       recordUsage(this, key);
       return key in target;
     },
     getOwnPropertyDescriptor(target, key) {
-      // LIMITATION:
-      // We simply record the same as get.
+      // LIMITATION: We simply record the same as `get`.
       // This means { a: {} } and { a: {} } is detected as changed,
-      // if obj.getOwnPropertyDescriptor('a')) is handled.
+      // if `obj.getOwnPropertyDescriptor('a'))` is handled.
       recordUsage(this, key, true);
       return Object.getOwnPropertyDescriptor(target, key);
     },
