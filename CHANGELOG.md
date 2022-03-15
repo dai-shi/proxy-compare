@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Support getOwnPropertyDescriptor handler #34
 
 ## [2.0.3] - 2022-02-28
 ### Changed
