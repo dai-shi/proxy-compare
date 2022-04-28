@@ -306,7 +306,7 @@ export const trackMemo = (obj: unknown) => {
  * const proxy = createProxy(original, affected);
  * const originalFromProxy = getUntracked(proxy)
  *
- * Obejct.is(original, originalFromProxy) // true
+ * Object.is(original, originalFromProxy) // true
  * isChanged(original, originalFromProxy, affected) // false
  */
 export const getUntracked = <T>(obj: T): T | null => {
