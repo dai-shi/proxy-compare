@@ -98,8 +98,8 @@ on the proxy, then isChanged will only compare the affected properties.
 
 #### Parameters
 
-*   `origObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The original object to compare.
-*   `nextObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the original one.
+*   `prevObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The previous object to compare.
+*   `nextObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the previous one.
 *   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
 *   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
     and to avoid infinite loop with circular structures.
@@ -109,18 +109,18 @@ on the proxy, then isChanged will only compare the affected properties.
 ```javascript
 import { createProxy, isChanged } from 'proxy-compare';
 
-const original = { a: "1", c: "2", d: { e: "3" } };
+const obj = { a: "1", c: "2", d: { e: "3" } };
 const affected = new WeakMap();
 
-const proxy = createProxy(original, affected);
+const proxy = createProxy(obj, affected);
 
 proxy.a
 
-isChanged(original, { a: "1" }, affected) // false
+isChanged(obj, { a: "1" }, affected) // false
 
 proxy.a = "2"
 
-isChanged(original, { a: "1" }, affected) // true
+isChanged(obj, { a: "1" }, affected) // true
 ```
 
 Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if the affected property on the object has changed.
@@ -146,7 +146,7 @@ const affected = new WeakMap();
 const proxy = createProxy(original, affected);
 const originalFromProxy = getUntracked(proxy)
 
-Obejct.is(original, originalFromProxy) // true
+Object.is(original, originalFromProxy) // true
 isChanged(original, originalFromProxy, affected) // false
 ```
 
@@ -164,8 +164,7 @@ to be untracked when creating your proxy.
 #### Parameters
 
 *   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to mark as tracked or not.
-*   `mark`   (optional, default `true`)
-*   `boolean` **mark** Boolean indicating whether you want to track this object or not.
+*   `mark`  Boolean indicating whether you want to track this object or not. (optional, default `true`)
 
 #### Examples
 
@@ -186,7 +185,7 @@ proxy.d.e
 isChanged(original, { d: { e: "3" } }, affected) // true
 ```
 
-Returns **[undefined](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/undefined)** No return.
+Returns **any** No return.
 
 ## Projects using this library
 
