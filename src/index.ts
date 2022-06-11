@@ -192,11 +192,11 @@ export const createProxy = <T>(
   return proxyHandler[PROXY_PROPERTY] as typeof target;
 };
 
-const isOwnKeysChanged = (origObj: object, nextObj: object) => {
-  const origKeys = Reflect.ownKeys(origObj);
+const isOwnKeysChanged = (prevObj: object, nextObj: object) => {
+  const prevKeys = Reflect.ownKeys(prevObj);
   const nextKeys = Reflect.ownKeys(nextObj);
-  return origKeys.length !== nextKeys.length
-    || origKeys.some((k, i) => k !== nextKeys[i]);
+  return prevKeys.length !== nextKeys.length
+    || prevKeys.some((k, i) => k !== nextKeys[i]);
 };
 
 type ChangedCache = WeakMap<object, {
