@@ -128,6 +128,13 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   return handler;
 };
 
+const getOriginalObject = <T extends object>(obj: T) => (
+  // unwrap proxy
+  (obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj })[GET_ORIGINAL_SYMBOL]
+  // otherwise
+  || obj
+);
+
 /**
  * Create a proxy.
  *
@@ -165,10 +172,7 @@ export const createProxy = <T>(
   proxyCache?: WeakMap<object, unknown>,
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
-  const origObj = (
-    obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj }
-  )[GET_ORIGINAL_SYMBOL]; // unwrap proxy
-  const target = origObj || obj;
+  const target = getOriginalObject(obj);
   const frozen = isFrozen(target);
   let proxyHandler: ProxyHandler<typeof target> | undefined = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
@@ -209,8 +213,8 @@ type ChangedCache = WeakMap<object, {
  * reference equality check for the objects provided (Object.is(a, b)). If you access a property
  * on the proxy, then isChanged will only compare the affected properties.
  *
- * @param {object} origObj - The original object to compare.
- * @param {object} nextObj - Object to compare with the original one.
+ * @param {object} prevObj - The previous object to compare.
+ * @param {object} nextObj - Object to compare with the previous one.
  * @param {WeakMap<object, unknown>} affected -
  * WeakMap that holds the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [cache] -
@@ -221,39 +225,39 @@ type ChangedCache = WeakMap<object, {
  * @example
  * import { createProxy, isChanged } from 'proxy-compare';
  *
- * const original = { a: "1", c: "2", d: { e: "3" } };
+ * const obj = { a: "1", c: "2", d: { e: "3" } };
  * const affected = new WeakMap();
  *
- * const proxy = createProxy(original, affected);
+ * const proxy = createProxy(obj, affected);
  *
  * proxy.a
  *
- * isChanged(original, { a: "1" }, affected) // false
+ * isChanged(obj, { a: "1" }, affected) // false
  *
  * proxy.a = "2"
  *
- * isChanged(original, { a: "1" }, affected) // true
+ * isChanged(obj, { a: "1" }, affected) // true
  */
 
 export const isChanged = (
-  origObj: unknown,
+  prevObj: unknown,
   nextObj: unknown,
   affected: WeakMap<object, unknown>,
   cache?: WeakMap<object, unknown>,
 ): boolean => {
-  if (Object.is(origObj, nextObj)) {
+  if (Object.is(prevObj, nextObj)) {
     return false;
   }
-  if (!isObject(origObj) || !isObject(nextObj)) return true;
-  const used = (affected as Affected).get(origObj);
+  if (!isObject(prevObj) || !isObject(nextObj)) return true;
+  const used = (affected as Affected).get(getOriginalObject(prevObj));
   if (!used) return true;
   if (cache) {
-    const hit = (cache as ChangedCache).get(origObj);
+    const hit = (cache as ChangedCache).get(prevObj);
     if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
       return hit[CHANGED_PROPERTY];
     }
     // for object with cycles
-    (cache as ChangedCache).set(origObj, {
+    (cache as ChangedCache).set(prevObj, {
       [NEXT_OBJECT_PROPERTY]: nextObj,
       [CHANGED_PROPERTY]: false,
     });
@@ -261,9 +265,9 @@ export const isChanged = (
   let changed: boolean | null = null;
   // eslint-disable-next-line no-restricted-syntax
   for (const key of used) {
-    const c = key === OWN_KEYS_SYMBOL ? isOwnKeysChanged(origObj, nextObj)
+    const c = key === OWN_KEYS_SYMBOL ? isOwnKeysChanged(prevObj, nextObj)
       : isChanged(
-        (origObj as any)[key],
+        (prevObj as any)[key],
         (nextObj as any)[key],
         affected,
         cache,
@@ -273,7 +277,7 @@ export const isChanged = (
   }
   if (changed === null) changed = true;
   if (cache) {
-    cache.set(origObj, {
+    cache.set(prevObj, {
       [NEXT_OBJECT_PROPERTY]: nextObj,
       [CHANGED_PROPERTY]: changed,
     });
@@ -324,9 +328,9 @@ export const getUntracked = <T>(obj: T): T | null => {
  * so this is useful for example to mark a class instance to track or to mark a object
  * to be untracked when creating your proxy.
  *
- * @param {object} obj - Object to mark as tracked or not.
- * @param {mark} boolean - Boolean indicating whether you want to track this object or not.
- * @returns {undefined} - No return.
+ * @param obj - Object to mark as tracked or not.
+ * @param mark - Boolean indicating whether you want to track this object or not.
+ * @returns No return.
  *
  * @example
  * import { createProxy, markToTrack, isChanged } from 'proxy-compare';
@@ -363,7 +367,7 @@ export const affectedToPathList = (
     if (isObject(x)) {
       seen.add(x);
     }
-    const used = (affected as Affected).get(x as object);
+    const used = isObject(x) && (affected as Affected).get(getOriginalObject(x));
     if (used) {
       used.forEach((key) => {
         walk((x as any)[key], path ? [...path, key] : [key]);
