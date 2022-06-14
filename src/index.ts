@@ -58,7 +58,7 @@ type ProxyCache<T extends object> = WeakMap<object, ProxyHandler<T>>;
 type ProxyHandler<T extends object> = {
   [FROZEN_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
-  [PROXY_CACHE_PROPERTY]?: ProxyCache<object>;
+  [PROXY_CACHE_PROPERTY]?: ProxyCache<object> | undefined;
   [AFFECTED_PROPERTY]?: Affected;
   get(target: T, key: string | symbol): unknown;
   has(target: T, key: string | symbol): boolean;

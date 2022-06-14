@@ -217,7 +217,7 @@ describe('special objects spec', () => {
 
   it('frozen object', () => {
     const proxyCache = new WeakMap();
-    const s1 = { a: { b: 'b' }, c: 'c' as string | undefined };
+    const s1: { a: { b: string }, c?: string } = { a: { b: 'b' }, c: 'c' };
     Object.freeze(s1);
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
