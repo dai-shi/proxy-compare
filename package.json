@@ -28,7 +28,7 @@
   ],
   "scripts": {
     "compile": "microbundle build -f modern,umd",
-    "postcompile": "cp dist/index.modern.mjs dist/index.modern.js && cp dist/index.modern.mjs.map dist/index.modern.js.map",
+    "postcompile": "cp dist/index.modern.js dist/index.modern.mjs && cp dist/index.modern.js.map dist/index.modern.mjs.map",
     "test": "run-s eslint tsc-test jest",
     "eslint": "eslint --ext .js,.ts --ignore-pattern dist .",
     "jest": "jest",
