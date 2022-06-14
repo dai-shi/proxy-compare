@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Support nested proxy #38
 
 ## [2.1.0] - 2022-03-16
 ### Added

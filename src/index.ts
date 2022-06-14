@@ -128,6 +128,13 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   return handler;
 };
 
+const getOriginalObject = <T extends object>(obj: T) => (
+  // unwrap proxy
+  (obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj })[GET_ORIGINAL_SYMBOL]
+  // otherwise
+  || obj
+);
+
 /**
  * Create a proxy.
  *
@@ -165,10 +172,7 @@ export const createProxy = <T>(
   proxyCache?: WeakMap<object, unknown>,
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
-  const origObj = (
-    obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj }
-  )[GET_ORIGINAL_SYMBOL]; // unwrap proxy
-  const target = origObj || obj;
+  const target = getOriginalObject(obj);
   const frozen = isFrozen(target);
   let proxyHandler: ProxyHandler<typeof target> | undefined = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
@@ -188,11 +192,11 @@ export const createProxy = <T>(
   return proxyHandler[PROXY_PROPERTY] as typeof target;
 };
 
-const isOwnKeysChanged = (origObj: object, nextObj: object) => {
-  const origKeys = Reflect.ownKeys(origObj);
+const isOwnKeysChanged = (prevObj: object, nextObj: object) => {
+  const prevKeys = Reflect.ownKeys(prevObj);
   const nextKeys = Reflect.ownKeys(nextObj);
-  return origKeys.length !== nextKeys.length
-    || origKeys.some((k, i) => k !== nextKeys[i]);
+  return prevKeys.length !== nextKeys.length
+    || prevKeys.some((k, i) => k !== nextKeys[i]);
 };
 
 type ChangedCache = WeakMap<object, {
@@ -245,7 +249,7 @@ export const isChanged = (
     return false;
   }
   if (!isObject(prevObj) || !isObject(nextObj)) return true;
-  const used = (affected as Affected).get(prevObj);
+  const used = (affected as Affected).get(getOriginalObject(prevObj));
   if (!used) return true;
   if (cache) {
     const hit = (cache as ChangedCache).get(prevObj);
@@ -363,7 +367,7 @@ export const affectedToPathList = (
     if (isObject(x)) {
       seen.add(x);
     }
-    const used = (affected as Affected).get(x as object);
+    const used = isObject(x) && (affected as Affected).get(getOriginalObject(x));
     if (used) {
       used.forEach((key) => {
         walk((x as any)[key], path ? [...path, key] : [key]);
