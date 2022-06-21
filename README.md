@@ -185,6 +185,18 @@ isChanged(original, { d: { e: "3" } }, affected) // true
 
 Returns **any** No return.
 
+### replaceNewProxy
+
+replace newProxy function.
+
+This can be used if you want to use proxy-polyfill.
+Note that proxy-polyfill can't polyfill everything.
+Use it at your own risk.
+
+#### Parameters
+
+*   `fn` **any** 
+
 ## Projects using this library
 
 *   [react-tracked](https://github.com/dai-shi/react-tracked)

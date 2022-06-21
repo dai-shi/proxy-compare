@@ -11,14 +11,11 @@ const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
 const CHANGED_PROPERTY = 'g';
 
-// workaround for proxy-polyfill
-const newProxy = <T extends object>(target: T, handler: ProxyHandler<T>) => {
-  try {
-    return new Proxy(target, handler);
-  } catch (e) {
-    return new Proxy(target, { get: handler.get, set: handler.set });
-  }
-};
+// function to create a new bare proxy
+let newProxy = <T extends object>(
+  target: T,
+  handler: ProxyHandler<T>,
+) => new Proxy(target, handler);
 
 // get object prototype
 const getProto = Object.getPrototypeOf;
@@ -386,4 +383,15 @@ export const affectedToPathList = (
   };
   walk(obj);
   return list;
+};
+
+/**
+ * replace newProxy function.
+ *
+ * This can be used if you want to use proxy-polyfill.
+ * Note that proxy-polyfill can't polyfill everything.
+ * Use it at your own risk.
+ */
+export const replaceNewProxy = (fn: typeof newProxy) => {
+  newProxy = fn;
 };
