@@ -11,7 +11,7 @@ const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
 const CHANGED_PROPERTY = 'g';
 
-// a workaround for proxy-polyfill
+// workaround for proxy-polyfill
 const newProxy = <T extends object>(target: T, handler: ProxyHandler<T>) => {
   try {
     return new Proxy(target, handler);
