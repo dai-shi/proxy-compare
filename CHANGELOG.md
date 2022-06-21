@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- feat: support proxy-polyfill #41
 
 ## [2.2.0] - 2022-06-14
 ### Added
