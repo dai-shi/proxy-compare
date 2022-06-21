@@ -27,17 +27,15 @@ undefined
 > affected = new WeakMap()
 WeakMap { [items unknown] }
 > proxy = createProxy(state, affected)
-Proxy [ { a: 1, b: 2 },
-  { r: [Function],
-    u: [Function],
-    get: [Function],
-    has: [Function],
-    ownKeys: [Function],
-    p: Proxy [ [Object], [Circular] ],
-    o: { a: 1, b: 2 },
-    t: false,
-    a: WeakMap { [items unknown] },
-    c: undefined } ]
+Proxy [
+  { a: 1, b: 2 },
+  {
+    get: [Function: get],
+    has: [Function: has],
+    getOwnPropertyDescriptor: [Function: getOwnPropertyDescriptor],
+    ownKeys: [Function: ownKeys]
+  }
+]
 > proxy.a
 1
 > isChanged(state, { a: 1, b: 22 }, affected)
