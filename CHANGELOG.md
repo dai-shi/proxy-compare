@@ -1,7 +1,9 @@
 # Change Log
 
 ## [Unreleased]
-### Change
+### Added
+- feat: support proxy-polyfill #41
+### Changed
 - fix: cache unfreeze results #44
 
 ## [2.2.0] - 2022-06-14

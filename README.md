@@ -27,17 +27,15 @@ undefined
 > affected = new WeakMap()
 WeakMap { [items unknown] }
 > proxy = createProxy(state, affected)
-Proxy [ { a: 1, b: 2 },
-  { r: [Function],
-    u: [Function],
-    get: [Function],
-    has: [Function],
-    ownKeys: [Function],
-    p: Proxy [ [Object], [Circular] ],
-    o: { a: 1, b: 2 },
-    t: false,
-    a: WeakMap { [items unknown] },
-    c: undefined } ]
+Proxy [
+  { a: 1, b: 2 },
+  {
+    get: [Function: get],
+    has: [Function: has],
+    getOwnPropertyDescriptor: [Function: getOwnPropertyDescriptor],
+    ownKeys: [Function: ownKeys]
+  }
+]
 > proxy.a
 1
 > isChanged(state, { a: 1, b: 22 }, affected)
@@ -186,6 +184,18 @@ isChanged(original, { d: { e: "3" } }, affected) // true
 ```
 
 Returns **any** No return.
+
+### replaceNewProxy
+
+replace newProxy function.
+
+This can be used if you want to use proxy-polyfill.
+Note that proxy-polyfill can't polyfill everything.
+Use it at your own risk.
+
+#### Parameters
+
+*   `fn` **any** 
 
 ## Projects using this library
 
