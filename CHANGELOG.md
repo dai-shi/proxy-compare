@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Change
+- fix: cache unfreeze results #44
 
 ## [2.2.0] - 2022-06-14
 ### Added
