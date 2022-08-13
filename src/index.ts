@@ -11,6 +11,12 @@ const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
 const CHANGED_PROPERTY = 'g';
 
+// function to create a new bare proxy
+let newProxy = <T extends object>(
+  target: T,
+  handler: ProxyHandler<T>,
+) => new Proxy(target, handler);
+
 // get object prototype
 const getProto = Object.getPrototypeOf;
 
@@ -54,78 +60,77 @@ const unfreeze = (obj: object) => {
 };
 
 type Affected = WeakMap<object, Set<string | symbol>>;
-type ProxyCache<T extends object> = WeakMap<object, ProxyHandler<T>>;
-type ProxyHandler<T extends object> = {
-  [FROZEN_PROPERTY]: boolean;
+type ProxyHandlerState<T extends object> = {
+  readonly [FROZEN_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object> | undefined;
   [AFFECTED_PROPERTY]?: Affected;
-  get(target: T, key: string | symbol): unknown;
-  has(target: T, key: string | symbol): boolean;
-  getOwnPropertyDescriptor(target: T, key: string | symbol): PropertyDescriptor | undefined;
-  ownKeys(target: T): (string | symbol)[];
-  set?(target: T, key: string | symbol, value: unknown): boolean;
-  deleteProperty?(target: T, key: string | symbol): boolean;
-};
+}
+type ProxyCache<T extends object> = WeakMap<
+  object,
+  readonly [ProxyHandler<T>, ProxyHandlerState<T>]
+>;
 
 const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
+  const state: ProxyHandlerState<T> = {
+    [FROZEN_PROPERTY]: frozen,
+  };
   let trackObject = false; // for trackMemo
-  const recordUsage = (h: ProxyHandler<T>, key: string | symbol, skipWithOwnKeys?: boolean) => {
+  const recordUsage = (key: string | symbol, skipWithOwnKeys?: boolean) => {
     if (!trackObject) {
-      let used = (h[AFFECTED_PROPERTY] as Affected).get(origObj);
+      let used = (state[AFFECTED_PROPERTY] as Affected).get(origObj);
       if (!used) {
         used = new Set();
-        (h[AFFECTED_PROPERTY] as Affected).set(origObj, used);
+        (state[AFFECTED_PROPERTY] as Affected).set(origObj, used);
       }
       if (!skipWithOwnKeys || !used.has(OWN_KEYS_SYMBOL)) {
         used.add(key);
       }
     }
   };
-  const recordObjectAsUsed = (h: ProxyHandler<T>) => {
+  const recordObjectAsUsed = () => {
     trackObject = true;
-    (h[AFFECTED_PROPERTY] as Affected).delete(origObj);
+    (state[AFFECTED_PROPERTY] as Affected).delete(origObj);
   };
   const handler: ProxyHandler<T> = {
-    [FROZEN_PROPERTY]: frozen,
     get(target, key) {
       if (key === GET_ORIGINAL_SYMBOL) {
         return origObj;
       }
-      recordUsage(this, key);
+      recordUsage(key);
       return createProxy(
         (target as any)[key],
-        (this[AFFECTED_PROPERTY] as Affected),
-        this[PROXY_CACHE_PROPERTY],
+        (state[AFFECTED_PROPERTY] as Affected),
+        state[PROXY_CACHE_PROPERTY],
       );
     },
     has(target, key) {
       if (key === TRACK_MEMO_SYMBOL) {
-        recordObjectAsUsed(this);
+        recordObjectAsUsed();
         return true;
       }
       // LIMITATION: We simply record the same as `get`.
       // This means { a: {} } and { a: {} } is detected as changed,
       // if `'a' in obj` is handled.
-      recordUsage(this, key);
+      recordUsage(key);
       return key in target;
     },
     getOwnPropertyDescriptor(target, key) {
       // LIMITATION: We simply record the same as `get`.
       // This means { a: {} } and { a: {} } is detected as changed,
       // if `obj.getOwnPropertyDescriptor('a'))` is handled.
-      recordUsage(this, key, true);
+      recordUsage(key, true);
       return Object.getOwnPropertyDescriptor(target, key);
     },
     ownKeys(target) {
-      recordUsage(this, OWN_KEYS_SYMBOL);
+      recordUsage(OWN_KEYS_SYMBOL);
       return Reflect.ownKeys(target);
     },
   };
   if (frozen) {
     handler.set = handler.deleteProperty = () => false;
   }
-  return handler;
+  return [handler, state] as const;
 };
 
 const getOriginalObject = <T extends object>(obj: T) => (
@@ -174,22 +179,22 @@ export const createProxy = <T>(
   if (!isObjectToTrack(obj)) return obj;
   const target = getOriginalObject(obj);
   const frozen = isFrozen(target);
-  let proxyHandler: ProxyHandler<typeof target> | undefined = (
+  let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
-  if (!proxyHandler || proxyHandler[FROZEN_PROPERTY] !== frozen) {
-    proxyHandler = createProxyHandler<T extends object ? T : never>(target, frozen);
-    proxyHandler[PROXY_PROPERTY] = new Proxy(
+  if (!handlerAndState || handlerAndState[1][FROZEN_PROPERTY] !== frozen) {
+    handlerAndState = createProxyHandler<typeof target>(target, frozen);
+    handlerAndState[1][PROXY_PROPERTY] = newProxy(
       frozen ? unfreeze(target) : target,
-      proxyHandler,
-    ) as typeof target;
+      handlerAndState[0],
+    );
     if (proxyCache) {
-      proxyCache.set(target, proxyHandler);
+      proxyCache.set(target, handlerAndState);
     }
   }
-  proxyHandler[AFFECTED_PROPERTY] = affected as Affected;
-  proxyHandler[PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object> | undefined;
-  return proxyHandler[PROXY_PROPERTY] as typeof target;
+  handlerAndState[1][AFFECTED_PROPERTY] = affected as Affected;
+  handlerAndState[1][PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object> | undefined;
+  return handlerAndState[1][PROXY_PROPERTY] as typeof target;
 };
 
 const isOwnKeysChanged = (prevObj: object, nextObj: object) => {
@@ -378,4 +383,15 @@ export const affectedToPathList = (
   };
   walk(obj);
   return list;
+};
+
+/**
+ * replace newProxy function.
+ *
+ * This can be used if you want to use proxy-polyfill.
+ * Note that proxy-polyfill can't polyfill everything.
+ * Use it at your own risk.
+ */
+export const replaceNewProxy = (fn: typeof newProxy) => {
+  newProxy = fn;
 };
