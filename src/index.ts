@@ -194,7 +194,7 @@ export const createProxy = <T>(
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
       frozen ? unfreeze(target) : target,
       handlerAndState[0],
-    );
+    ) as typeof target;
     if (proxyCache) {
       proxyCache.set(target, handlerAndState);
     }
