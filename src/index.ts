@@ -48,7 +48,7 @@ const isFrozen = (obj: object) => (
 
 // copy frozen object
 const unfrozenCache = new WeakMap<object, object>();
-const unfreeze = (obj: object) => {
+const unfreeze = <T extends object>(obj: T): T => {
   let unfrozen = unfrozenCache.get(obj);
   if (!unfrozen) {
     if (Array.isArray(obj)) {
@@ -63,7 +63,7 @@ const unfreeze = (obj: object) => {
     }
     unfrozenCache.set(obj, unfrozen as object);
   }
-  return unfrozen as object;
+  return unfrozen as T;
 };
 
 type Affected = WeakMap<object, Set<string | symbol>>;
@@ -194,7 +194,7 @@ export const createProxy = <T>(
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
       frozen ? unfreeze(target) : target,
       handlerAndState[0],
-    ) as typeof target;
+    );
     if (proxyCache) {
       proxyCache.set(target, handlerAndState);
     }
