@@ -12,9 +12,7 @@ const CHANGED_PROPERTY = 'g';
 const KEYS_PROPERTY = 'k';
 const HAS_KEY_PROPERTY = 'h';
 const HAS_OWN_KEY_PROPERTY = 'o';
-
-// constants
-const ALL_OWN_KEYS = true as const;
+const ALL_OWN_KEYS_PROPERTY = 'w';
 
 // function to create a new bare proxy
 let newProxy = <T extends object>(
@@ -75,9 +73,10 @@ type KeysSet = Set<string | symbol>
 type HasKeySet = Set<string | symbol>
 type HasOwnKeySet = Set<string | symbol>
 type Used = {
-  readonly [KEYS_PROPERTY]: KeysSet;
-  readonly [HAS_KEY_PROPERTY]: HasKeySet;
-  [HAS_OWN_KEY_PROPERTY]: HasOwnKeySet | typeof ALL_OWN_KEYS;
+  [KEYS_PROPERTY]?: KeysSet;
+  [HAS_KEY_PROPERTY]?: HasKeySet;
+  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet;
+  [ALL_OWN_KEYS_PROPERTY]?: true;
 };
 type Affected = WeakMap<object, Used>;
 type ProxyHandlerState<T extends object> = {
@@ -96,20 +95,31 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
     [FROZEN_PROPERTY]: frozen,
   };
   let trackObject = false; // for trackMemo
-  const getUsed = (): Used | undefined => {
-    let used: Used | undefined;
+  const recordUsage = (
+    type:
+      | typeof KEYS_PROPERTY
+      | typeof HAS_KEY_PROPERTY
+      | typeof HAS_OWN_KEY_PROPERTY
+      | typeof ALL_OWN_KEYS_PROPERTY,
+    key?: string | symbol,
+  ) => {
     if (!trackObject) {
-      used = (state[AFFECTED_PROPERTY] as Affected).get(origObj);
+      let used = (state[AFFECTED_PROPERTY] as Affected).get(origObj);
       if (!used) {
-        used = {
-          [KEYS_PROPERTY]: new Set(),
-          [HAS_KEY_PROPERTY]: new Set(),
-          [HAS_OWN_KEY_PROPERTY]: new Set(),
-        };
+        used = {};
         (state[AFFECTED_PROPERTY] as Affected).set(origObj, used);
       }
+      if (type === ALL_OWN_KEYS_PROPERTY) {
+        used[ALL_OWN_KEYS_PROPERTY] = true;
+      } else {
+        let set = used[type];
+        if (!set) {
+          set = new Set();
+          used[type] = set;
+        }
+        set.add(key as string | symbol);
+      }
     }
-    return used;
   };
   const recordObjectAsUsed = () => {
     trackObject = true;
@@ -120,9 +130,9 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
       if (key === GET_ORIGINAL_SYMBOL) {
         return origObj;
       }
-      getUsed()?.[KEYS_PROPERTY].add(key);
+      recordUsage(KEYS_PROPERTY, key);
       return createProxy(
-        (target as any)[key],
+        Reflect.get(target, key),
         (state[AFFECTED_PROPERTY] as Affected),
         state[PROXY_CACHE_PROPERTY],
       );
@@ -132,21 +142,15 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
         recordObjectAsUsed();
         return true;
       }
-      getUsed()?.[HAS_KEY_PROPERTY].add(key);
-      return key in target;
+      recordUsage(HAS_KEY_PROPERTY, key);
+      return Reflect.has(target, key);
     },
     getOwnPropertyDescriptor(target, key) {
-      const hasOwnKey = getUsed()?.[HAS_OWN_KEY_PROPERTY];
-      if (hasOwnKey && hasOwnKey !== ALL_OWN_KEYS) {
-        hasOwnKey.add(key);
-      }
+      recordUsage(HAS_OWN_KEY_PROPERTY, key);
       return Object.getOwnPropertyDescriptor(target, key);
     },
     ownKeys(target) {
-      const used = getUsed();
-      if (used) {
-        used[HAS_OWN_KEY_PROPERTY] = ALL_OWN_KEYS;
-      }
+      recordUsage(ALL_OWN_KEYS_PROPERTY);
       return Reflect.ownKeys(target);
     },
   };
@@ -220,7 +224,7 @@ export const createProxy = <T>(
   return handlerAndState[1][PROXY_PROPERTY] as typeof target;
 };
 
-const isOwnKeysChanged = (prevObj: object, nextObj: object) => {
+const isAllOwnKeysChanged = (prevObj: object, nextObj: object) => {
   const prevKeys = Reflect.ownKeys(prevObj);
   const nextKeys = Reflect.ownKeys(nextObj);
   return prevKeys.length !== nextKeys.length
@@ -291,48 +295,41 @@ export const isChanged = (
     });
   }
   let changed: boolean | null = null;
-  // eslint-disable-next-line no-restricted-syntax
-  for (const key of used[HAS_KEY_PROPERTY]) {
-    changed = Reflect.has(prevObj, key) !== Reflect.has(nextObj, key);
-    if (changed) break;
-  }
-
-  if (!changed) {
-    if (used[HAS_OWN_KEY_PROPERTY] === ALL_OWN_KEYS) {
-      changed = isOwnKeysChanged(prevObj, nextObj);
+  try {
+    for (const key of used[HAS_KEY_PROPERTY] || []) {
+      changed = Reflect.has(prevObj, key) !== Reflect.has(nextObj, key);
+      if (changed) return changed;
+    }
+    if (used[ALL_OWN_KEYS_PROPERTY] === true) {
+      changed = isAllOwnKeysChanged(prevObj, nextObj);
+      if (changed) return changed;
     } else {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const key of used[HAS_OWN_KEY_PROPERTY]) {
-        const hasOld = Reflect.getOwnPropertyDescriptor(prevObj as any, key) !== undefined;
-        const hasNew = Reflect.getOwnPropertyDescriptor(nextObj as any, key) !== undefined;
-
-        changed = hasOld !== hasNew;
-        if (changed) break;
+      for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
+        const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevObj, key);
+        const hasNext = !!Reflect.getOwnPropertyDescriptor(nextObj, key);
+        changed = hasPrev !== hasNext;
+        if (changed) return changed;
       }
     }
-  }
-
-  if (!changed) {
-    // eslint-disable-next-line no-restricted-syntax
-    for (const key of used[KEYS_PROPERTY]) {
-      const c = isChanged(
+    for (const key of used[KEYS_PROPERTY] || []) {
+      changed = isChanged(
         (prevObj as any)[key],
         (nextObj as any)[key],
         affected,
         cache,
       );
-      if (c === true || c === false) changed = c;
-      if (changed) break;
+      if (changed) return changed;
+    }
+    if (changed === null) changed = true;
+    return changed;
+  } finally {
+    if (cache) {
+      cache.set(prevObj, {
+        [NEXT_OBJECT_PROPERTY]: nextObj,
+        [CHANGED_PROPERTY]: changed,
+      });
     }
   }
-  if (changed === null) changed = true;
-  if (cache) {
-    cache.set(prevObj, {
-      [NEXT_OBJECT_PROPERTY]: nextObj,
-      [CHANGED_PROPERTY]: changed,
-    });
-  }
-  return changed;
 };
 
 // explicitly track object with memo
@@ -419,20 +416,20 @@ export const affectedToPathList = (
     }
     const used = isObject(x) && (affected as Affected).get(getOriginalObject(x));
     if (used) {
-      used[HAS_KEY_PROPERTY].forEach((key) => {
+      used[HAS_KEY_PROPERTY]?.forEach((key) => {
         const segment = `:has(${String(key)})`;
         list.push(path ? [...path, segment] : [segment]);
       });
-      if (used[HAS_OWN_KEY_PROPERTY] === ALL_OWN_KEYS) {
+      if (used[ALL_OWN_KEYS_PROPERTY] === true) {
         const segment = ':ownKeys';
         list.push(path ? [...path, segment] : [segment]);
       } else {
-        used[HAS_OWN_KEY_PROPERTY].forEach((key) => {
+        used[HAS_OWN_KEY_PROPERTY]?.forEach((key) => {
           const segment = `:hasOwn(${String(key)})`;
           list.push(path ? [...path, segment] : [segment]);
         });
       }
-      used[KEYS_PROPERTY].forEach((key) => {
+      used[KEYS_PROPERTY]?.forEach((key) => {
         walk((x as any)[key], path ? [...path, key] : [key]);
       });
     } else if (path) {

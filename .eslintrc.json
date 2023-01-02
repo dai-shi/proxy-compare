@@ -32,7 +32,8 @@
     "no-multi-assign": "off",
     "no-nested-ternary": "off",
     "no-unused-vars": "off",
-    "@typescript-eslint/ban-types": "off"
+    "@typescript-eslint/ban-types": "off",
+    "no-restricted-syntax": ["error", "ForInStatement", "LabeledStatement", "WithStatement"]
   },
   "overrides": [{
     "files": ["__tests__/**/*"],
