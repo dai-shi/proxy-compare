@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - feat: better support of Object.hasOwn and "in" #47
+- feat: add an option to exclude object getters in affectedToPathList util #48
 
 ## [2.3.0] - 2022-08-13
 ### Added
