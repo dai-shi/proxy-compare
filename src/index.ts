@@ -377,7 +377,7 @@ export const getUntracked = <T>(obj: T): T | null => {
  *
  * @param obj - Object to mark as tracked or not.
  * @param mark - Boolean indicating whether you want to track this object or not.
- * @returns No return.
+ * @returns - No return.
  *
  * @example
  * import { createProxy, markToTrack, isChanged } from 'proxy-compare';
@@ -399,10 +399,22 @@ export const markToTrack = (obj: object, mark = true) => {
   objectsToTrack.set(obj, mark);
 };
 
-// convert affected to path list
+/**
+ * Convert `affected` to path list
+ *
+ * `affected` is a weak map which is not printable.
+ * This function is can convert it to printable path list.
+ * It's for debugging purpose.
+ *
+ * @param obj - An object that is used with `createProxy`.
+ * @param affected - A weak map that is used with `createProxy`.
+ * @param onlyWithValues - An optional boolean to exclude object getters.
+ * @returns - An array of paths.
+ */
 export const affectedToPathList = (
   obj: unknown,
   affected: WeakMap<object, unknown>,
+  onlyWithValues?: boolean,
 ) => {
   const list: (string | symbol)[][] = [];
   const seen = new WeakSet();
@@ -430,7 +442,9 @@ export const affectedToPathList = (
         });
       }
       used[KEYS_PROPERTY]?.forEach((key) => {
-        walk((x as any)[key], path ? [...path, key] : [key]);
+        if (!onlyWithValues || 'value' in (Object.getOwnPropertyDescriptor(x, key) || {})) {
+          walk((x as any)[key], path ? [...path, key] : [key]);
+        }
       });
     } else if (path) {
       list.push(path);
