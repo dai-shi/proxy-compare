@@ -185,6 +185,22 @@ isChanged(original, { d: { e: "3" } }, affected) // true
 
 Returns **any** No return.
 
+### affectedToPathList
+
+Convert `affected` to path list
+
+`affected` is a weak map which is not printable.
+This function is can convert it to printable path list.
+It's for debugging purpose.
+
+#### Parameters
+
+*   `obj` **any** An object that is used with `createProxy`.
+*   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** A weak map that is used with `createProxy`.
+*   `onlyWithValues` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** An optional boolean to exclude object getters.
+
+Returns **any** An array of paths.
+
 ### replaceNewProxy
 
 replace newProxy function.
