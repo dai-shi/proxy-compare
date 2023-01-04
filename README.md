@@ -195,7 +195,7 @@ Use it at your own risk.
 
 #### Parameters
 
-*   `fn` **any** 
+*   `fn` **any**&#x20;
 
 ## Projects using this library
 
