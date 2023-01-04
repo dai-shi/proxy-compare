@@ -9,10 +9,10 @@ const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
 const CHANGED_PROPERTY = 'g';
-const KEYS_PROPERTY = 'k';
 const HAS_KEY_PROPERTY = 'h';
-const HAS_OWN_KEY_PROPERTY = 'o';
 const ALL_OWN_KEYS_PROPERTY = 'w';
+const HAS_OWN_KEY_PROPERTY = 'o';
+const KEYS_PROPERTY = 'k';
 
 // function to create a new bare proxy
 let newProxy = <T extends object>(
@@ -69,14 +69,14 @@ const unfreeze = <T extends object>(obj: T): T => {
   return unfrozen as T;
 };
 
-type KeysSet = Set<string | symbol>
 type HasKeySet = Set<string | symbol>
 type HasOwnKeySet = Set<string | symbol>
+type KeysSet = Set<string | symbol>
 type Used = {
-  [KEYS_PROPERTY]?: KeysSet;
   [HAS_KEY_PROPERTY]?: HasKeySet;
-  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet;
   [ALL_OWN_KEYS_PROPERTY]?: true;
+  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet;
+  [KEYS_PROPERTY]?: KeysSet;
 };
 type Affected = WeakMap<object, Used>;
 type ProxyHandlerState<T extends object> = {
@@ -97,10 +97,10 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   let trackObject = false; // for trackMemo
   const recordUsage = (
     type:
-      | typeof KEYS_PROPERTY
       | typeof HAS_KEY_PROPERTY
+      | typeof ALL_OWN_KEYS_PROPERTY
       | typeof HAS_OWN_KEY_PROPERTY
-      | typeof ALL_OWN_KEYS_PROPERTY,
+      | typeof KEYS_PROPERTY,
     key?: string | symbol,
   ) => {
     if (!trackObject) {
@@ -147,7 +147,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
     },
     getOwnPropertyDescriptor(target, key) {
       recordUsage(HAS_OWN_KEY_PROPERTY, key);
-      return Object.getOwnPropertyDescriptor(target, key);
+      return Reflect.getOwnPropertyDescriptor(target, key);
     },
     ownKeys(target) {
       recordUsage(ALL_OWN_KEYS_PROPERTY);
