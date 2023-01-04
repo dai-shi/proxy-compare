@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- feat: better support of Object.hasOwn and "in" #47
 
 ## [2.3.0] - 2022-08-13
 ### Added
