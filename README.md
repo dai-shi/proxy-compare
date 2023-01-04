@@ -1,6 +1,6 @@
 # proxy-compare
 
-[![CI](https://img.shields.io/github/workflow/status/dai-shi/proxy-compare/CI)](https://github.com/dai-shi/proxy-compare/actions?query=workflow%3ACI)
+[![CI](https://img.shields.io/github/actions/workflow/status/dai-shi/proxy-compare/ci.yml?branch=main)](https://github.com/dai-shi/proxy-compare/actions?query=workflow%3ACI)
 [![npm](https://img.shields.io/npm/v/proxy-compare)](https://www.npmjs.com/package/proxy-compare)
 [![size](https://img.shields.io/bundlephobia/minzip/proxy-compare)](https://bundlephobia.com/result?p=proxy-compare)
 
