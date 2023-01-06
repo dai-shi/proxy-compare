@@ -131,6 +131,9 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
         return origObj;
       }
       recordUsage(KEYS_PROPERTY, key);
+      if (isFrozen(target)) {
+        return Reflect.get(target, key);
+      }
       return createProxy(
         Reflect.get(target, key),
         (state[AFFECTED_PROPERTY] as Affected),
