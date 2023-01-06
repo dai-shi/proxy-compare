@@ -17,6 +17,7 @@ describe('immer v8', () => {
     expect(isChanged(s1, { a: { b: 'b' } }, a1)).toBe(true);
     Object.freeze(s1.a);
     Object.freeze(s1);
+    noop(p1.a);
     const a2 = new WeakMap();
     const p2 = createProxy(s1, a2, proxyCache);
     noop(p2.a.b);

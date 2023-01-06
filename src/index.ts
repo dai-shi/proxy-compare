@@ -48,6 +48,11 @@ const isFrozen = (obj: object) => (
     )
   )
 );
+// check if target[key] is read-only and non-configurable
+const isReadOnlyNonConfigurable = (target: object, key: string | symbol) => {
+  const descriptor = Object.getOwnPropertyDescriptor(target, key);
+  return descriptor && !descriptor.configurable && !descriptor.writable;
+};
 
 // copy frozen object
 const unfrozenCache = new WeakMap<object, object>();
@@ -131,6 +136,11 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
         return origObj;
       }
       recordUsage(KEYS_PROPERTY, key);
+      // when the target[key] is read-only and non-configurable
+      // we can only return its actual value
+      if (isReadOnlyNonConfigurable(target, key)) {
+        return Reflect.get(target, key);
+      }
       return createProxy(
         Reflect.get(target, key),
         (state[AFFECTED_PROPERTY] as Affected),
