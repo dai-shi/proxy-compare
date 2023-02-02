@@ -25,9 +25,9 @@ $ node
 undefined
 > state = { a: 1, b: 2 }
 { a: 1, b: 2 }
-> affected = new WeakMap()
+> accessed = new WeakMap()
 WeakMap { [items unknown] }
-> proxy = createProxy(state, affected)
+> proxy = createProxy(state, accessed)
 Proxy [
   { a: 1, b: 2 },
   {
@@ -39,9 +39,9 @@ Proxy [
 ]
 > proxy.a
 1
-> isChanged(state, { a: 1, b: 22 }, affected)
+> isChanged(state, { a: 1, b: 22 }, accessed)
 false
-> isChanged(state, { a: 11, b: 2 }, affected)
+> isChanged(state, { a: 11, b: 2 }, accessed)
 true
 ```
 
@@ -62,7 +62,7 @@ for this purpose you can use the `affectedToPathList` helper.
 #### Parameters
 
 *   `obj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object that will be wrapped on the proxy.
-*   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that will hold the tracking of which properties in the proxied object were accessed.
+*   `accessed` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that will hold the tracking of which properties in the proxied object were accessed.
 *   `proxyCache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that will help keep referential identity for proxies.
 
 #### Examples
@@ -70,17 +70,23 @@ for this purpose you can use the `affectedToPathList` helper.
 ```javascript
 import { createProxy } from 'proxy-compare';
 
-const original = { a: "1", c: "2", d: { e: "3" } };
-const affected = new WeakMap();
-const proxy = createProxy(original, affected);
+const d = { e: "3" };
+const original = { a: "1", c: "2", d };
+const accessed = new WeakMap();
+const proxy = createProxy(original, accessed);
 
 proxy.a // Will mark as used and track its value.
-// This will update the affected WeakMap with original as key
-// and a Set with "a"
+// This will update the accessed WeakMap to be
+// { original: Set("a") }
 
-proxy.d // Will mark "d" as accessed to track and proxy itself ({ e: "3" }).
-// This will update the affected WeakMap with original as key
-// and a Set with "d"
+proxy.d // Will mark the `d` field as used and return its value ({ e: "3" }) wrapped with its own tracking proxy
+// This will update the accessed WeakMap to be:
+// { original: Set("a", "d") }
+
+proxy.d.e
+// This will update the accessed WeakMap to be:
+// { original: Set("a", "d"), d: Set("e") }
+
 ```
 
 Returns **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)>** Object wrapped in a proxy.
@@ -89,17 +95,17 @@ Returns **[Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Gl
 
 Compare changes on objects.
 
-This will compare the affected properties on tracked objects inside the proxy
-to check if there were any changes made to it,
-by default if no property was accessed on the proxy it will attempt to do a
-reference equality check for the objects provided (Object.is(a, b)). If you access a property
-on the proxy, then isChanged will only compare the affected properties.
+This will compare only accessed fields on tracked objects inside the proxy to check if there were any changes made to them.
+
+If no fields were accessed on the proxy, it will attempt to do a reference equality check for the objects provided (Object.is(a, b)).
+
+If fields were accessed on the proxy, then isChanged will only compare the accessed properties.
 
 #### Parameters
 
 *   `prevObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** The previous object to compare.
 *   `nextObj` **[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Object to compare with the previous one.
-*   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
+*   `accessed` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>** WeakMap that holds the tracking of which properties in the proxied object were accessed.
 *   `cache` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), unknown>?** WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
     and to avoid infinite loop with circular structures.
 
@@ -109,20 +115,20 @@ on the proxy, then isChanged will only compare the affected properties.
 import { createProxy, isChanged } from 'proxy-compare';
 
 const obj = { a: "1", c: "2", d: { e: "3" } };
-const affected = new WeakMap();
+const accessed = new WeakMap();
 
-const proxy = createProxy(obj, affected);
+const proxy = createProxy(obj, accessed);
 
 proxy.a
 
-isChanged(obj, { a: "1" }, affected) // false
+isChanged(obj, { a: "1" }, accessed) // false
 
 proxy.a = "2"
 
-isChanged(obj, { a: "1" }, affected) // true
+isChanged(obj, { a: "1" }, accessed) // true
 ```
 
-Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if the affected property on the object has changed.
+Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if any accessed fields on the object (or nested fields accessed on its children) have changed.
 
 ### getUntracked
 
@@ -140,13 +146,13 @@ Used to retrieve the original object used to create the proxy instance with `cre
 import { createProxy, getUntracked } from 'proxy-compare';
 
 const original = { a: "1", c: "2", d: { e: "3" } };
-const affected = new WeakMap();
+const accessed = new WeakMap();
 
-const proxy = createProxy(original, affected);
+const proxy = createProxy(original, accessed);
 const originalFromProxy = getUntracked(proxy)
 
 Object.is(original, originalFromProxy) // true
-isChanged(original, originalFromProxy, affected) // false
+isChanged(original, originalFromProxy, accessed) // false
 ```
 
 Returns **([object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object) | null)** Return either the unwrapped object if exists.
@@ -175,29 +181,29 @@ const nested = { e: "3" }
 markToTrack(nested, false)
 
 const original = { a: "1", c: "2", d: nested };
-const affected = new WeakMap();
+const accessed = new WeakMap();
 
-const proxy = createProxy(original, affected);
+const proxy = createProxy(original, accessed);
 
 proxy.d.e
 
-isChanged(original, { d: { e: "3" } }, affected) // true
+isChanged(original, { d: { e: "3" } }, accessed) // true
 ```
 
 Returns **any** No return.
 
 ### affectedToPathList
 
-Convert `affected` to path list
+Convert `accessed` to path list
 
-`affected` is a weak map which is not printable.
+`accessed` is a weak map which is not printable.
 This function is can convert it to printable path list.
 It's for debugging purpose.
 
 #### Parameters
 
 *   `obj` **any** An object that is used with `createProxy`.
-*   `affected` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** A weak map that is used with `createProxy`.
+*   `accessed` **[WeakMap](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakMap)<[object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object), any>** A weak map that is used with `createProxy`.
 *   `onlyWithValues` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)?** An optional boolean to exclude object getters.
 
 Returns **any** An array of paths.
