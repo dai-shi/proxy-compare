@@ -173,8 +173,8 @@ const getOriginalObject = <T extends object>(obj: T) => (
  * This function will create a proxy at top level and proxy nested objects as you access them,
  * in order to keep track of which properties were accessed via get/has proxy handlers:
  *
- * NOTE: Printing of WeakMap is hard to inspect and not very readable
- * for this purpose you can use the `accessedToPathList` helper.
+ * NOTE: Printing of WeakMap is hard to inspect and not very readable,
+ * for this purpose you can use the `getPathList` helper.
  *
  * @param {object} obj - Object that will be wrapped on the proxy.
  * @param {WeakMap<object, unknown>} accessed -
@@ -186,17 +186,22 @@ const getOriginalObject = <T extends object>(obj: T) => (
  * @example
  * import { createProxy } from 'proxy-compare';
  *
- * const original = { a: "1", c: "2", d: { e: "3" } };
+ * const nested = { e: "3" }
+ * const original = { a: "1", c: "2", d: nested };
  * const accessed = new WeakMap();
  * const proxy = createProxy(original, accessed);
  *
- * proxy.a // Will mark as used and track its value.
- * // This will update the accessed WeakMap with original as key
- * // and a Set with "a"
+ * proxy.a // Marks `a` as accessed and returns "1"
+ * // The usage is recorded in accessed:
+ * // { original: Set("a") }
  *
- * proxy.d // Will mark "d" as accessed to track and proxy itself ({ e: "3" }).
- * // This will update the accessed WeakMap with original as key
- * // and a Set with "d"
+ * proxy.d // marks "d" as accessed and returns nested wrapped in its own tracking proxy
+ * // The usage is recorded in accessed:
+ * // { original: Set("a", "d") }
+ *
+ * proxy.d.e // marks "d" as accessed on `nested` and returns "3"
+ * // The usage is recorded in accessed:
+ * // { parent: Set("a", "d"), nested: Set("e") }
  */
 export const createProxy = <T>(
   obj: T,
@@ -246,13 +251,14 @@ type ChangedCache = WeakMap<object, {
  * on the proxy, then isChanged will only compare the accessed properties.
  *
  * @param {object} prevObj - The previous object to compare.
- * @param {object} nextObj - Object to compare with the previous one.
+ * @param {object} nextObj - The next object to compare with the previous one.
  * @param {WeakMap<object, unknown>} accessed -
  * WeakMap that holds the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [cache] -
  * WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
  * and to avoid infinite loop with circular structures.
- * @returns {boolean} - Boolean indicating if the accessed property on the object has changed.
+ * @returns {boolean} - Boolean indicating if any accessed properties on the object (or nested
+ * fields that were accessed on child objects) have changed.
  *
  * @example
  * import { createProxy, isChanged } from 'proxy-compare';
@@ -372,7 +378,7 @@ export const getUntracked = <T>(obj: T): T | null => {
  *
  * This function marks an object that will be passed into `createProxy`
  * as marked to track or not. By default only Array and Object are marked to track,
- * so this is useful for example to mark a class instance to track or to mark a object
+ * so this is useful for example to mark a class instance to track or to mark an object
  * to be untracked when creating your proxy.
  *
  * @param obj - Object to mark as tracked or not.
@@ -394,17 +400,35 @@ export const getUntracked = <T>(obj: T): T | null => {
  * proxy.d.e
  *
  * isChanged(original, { d: { e: "3" } }, accessed) // true
+ * // Even though `{ e: "3" } is structurally equivalent to `nested`, because `nested` was not
+ * // tracked, `isChanged` sees the new `{ e: "3" }` as a new instance with no equal keys and so
+ * // by default considers it changed.
  */
 export const markToTrack = (obj: object, mark = true) => {
   objectsToTrack.set(obj, mark);
 };
 
 /**
- * Convert `accessed` to a list of paths
+ * Convert `accessed` to a list of paths.
  *
- * `accessed` is a weak map which is not printable.
- * This function is can convert it to printable path list.
- * It's for debugging purpose.
+ * Because `accessed` is a WeakMap, it is not easy to print/log for debugging.
+ *
+ * `getPathList` converts `accessed` to a list of paths. It should primarily be used for debugging,
+ * because `isChanged` is the canonical API for asking "are there changes?".
+ *
+ * @example
+ * import { createProxy, markToTrack, isChanged } from 'proxy-compare';
+ *
+ * const nested = { e: "3" }
+ * markToTrack(nested, false)
+ * const original = { a: "1", c: "2", d: nested };
+ *
+ * const accessed = new WeakMap();
+ * const proxy = createProxy(original, accessed);
+ * proxy.a
+ * proxy.d.e
+ *
+ * getPathList(accessed) //  [['a'], ['d', 'e']]
  *
  * @param obj - An object that is used with `createProxy`.
  * @param accessed - A weak map that is used with `createProxy`.
@@ -415,7 +439,7 @@ export const getPathList = (
   obj: unknown,
   accessed: WeakMap<object, unknown>,
   onlyWithValues?: boolean,
-) => {
+): (string | symbol)[][] => {
   const list: (string | symbol)[][] = [];
   const seen = new WeakSet();
   const walk = (x: unknown, path?: (string | symbol)[]) => {
