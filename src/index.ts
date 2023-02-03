@@ -173,8 +173,8 @@ const getOriginalObject = <T extends object>(obj: T) => (
  * This function will create a proxy at top level and proxy nested objects as you access them,
  * in order to keep track of which properties were accessed via get/has proxy handlers:
  *
- * NOTE: Printing of WeakMap is hard to inspect and not very readable,
- * for this purpose you can use the `getPathList` helper.
+ * NOTE: Printing of WeakMap is hard to inspect and not very readable; for this you can use
+ * `getPathList`.
  *
  * @param {object} obj - Object that will be wrapped on the proxy.
  * @param {WeakMap<object, unknown>} accessed -
@@ -258,7 +258,7 @@ type ChangedCache = WeakMap<object, {
  * WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
  * and to avoid infinite loop with circular structures.
  * @returns {boolean} - Boolean indicating if any accessed properties on the object (or nested
- * fields that were accessed on child objects) have changed.
+ * fields that were accessed on tracked child objects) have changed.
  *
  * @example
  * import { createProxy, isChanged } from 'proxy-compare';

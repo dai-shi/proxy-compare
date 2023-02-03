@@ -56,8 +56,8 @@ Create a proxy.
 This function will create a proxy at top level and proxy nested objects as you access them,
 in order to keep track of which properties were accessed via get/has proxy handlers:
 
-NOTE: Printing of WeakMap is hard to inspect and not very readable,
-for this purpose you can use the `getPathList` helper.
+NOTE: Printing of WeakMap is hard to inspect and not very readable; for this you can use
+`getPathList`.
 
 #### Parameters
 
@@ -128,7 +128,7 @@ isChanged(obj, { a: "1" }, accessed) // true
 ```
 
 Returns **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)** Boolean indicating if any accessed properties on the object (or nested
-fields that were accessed on child objects) have changed.
+fields that were accessed on tracked child objects) have changed.
 
 ### getUntracked
 
