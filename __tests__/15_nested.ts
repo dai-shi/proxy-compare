@@ -1,4 +1,4 @@
-import { createProxy, isChanged, affectedToPathList } from '../src/index';
+import { createProxy, isChanged, getPathList } from '../src/index';
 
 const noop = (_arg: unknown) => {
   // do nothing
@@ -21,7 +21,7 @@ describe('nested proxy spec', () => {
     expect(isChanged(s2, { p: p11 }, a2)).toBe(false);
     expect(isChanged(s2, { p: p12 }, a2)).toBe(false);
     expect(isChanged(s2, { p: p13 }, a2)).toBe(true);
-    expect(affectedToPathList(s2, a2)).toEqual([
+    expect(getPathList(s2, a2)).toEqual([
       ['p', 'a', 'c'],
     ]);
   });
@@ -46,7 +46,7 @@ describe('nested proxy spec', () => {
     expect(isChanged(s2, { p: p11, d: 'd2' }, a2)).toBe(true);
     expect(isChanged(s2, { p: p12, d: 'd2' }, a2)).toBe(true);
     expect(isChanged(s2, { p: p13, d: 'd2' }, a2)).toBe(true);
-    expect(affectedToPathList(s2, a2)).toEqual([
+    expect(getPathList(s2, a2)).toEqual([
       ['p', 'a', 'c'],
       ['d'],
     ]);

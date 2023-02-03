@@ -3,7 +3,7 @@ const TRACK_MEMO_SYMBOL = Symbol();
 const GET_ORIGINAL_SYMBOL = Symbol();
 
 // properties
-const AFFECTED_PROPERTY = 'a';
+const ACCESSED_PROPERTY = 'a';
 const FROZEN_PROPERTY = 'f';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
@@ -78,12 +78,12 @@ type Used = {
   [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet;
   [KEYS_PROPERTY]?: KeysSet;
 };
-type Affected = WeakMap<object, Used>;
+type Accessed = WeakMap<object, Used>;
 type ProxyHandlerState<T extends object> = {
   readonly [FROZEN_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object> | undefined;
-  [AFFECTED_PROPERTY]?: Affected;
+  [ACCESSED_PROPERTY]?: Accessed;
 }
 type ProxyCache<T extends object> = WeakMap<
   object,
@@ -104,10 +104,10 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
     key?: string | symbol,
   ) => {
     if (!trackObject) {
-      let used = (state[AFFECTED_PROPERTY] as Affected).get(origObj);
+      let used = (state[ACCESSED_PROPERTY] as Accessed).get(origObj);
       if (!used) {
         used = {};
-        (state[AFFECTED_PROPERTY] as Affected).set(origObj, used);
+        (state[ACCESSED_PROPERTY] as Accessed).set(origObj, used);
       }
       if (type === ALL_OWN_KEYS_PROPERTY) {
         used[ALL_OWN_KEYS_PROPERTY] = true;
@@ -123,7 +123,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
   };
   const recordObjectAsUsed = () => {
     trackObject = true;
-    (state[AFFECTED_PROPERTY] as Affected).delete(origObj);
+    (state[ACCESSED_PROPERTY] as Accessed).delete(origObj);
   };
   const handler: ProxyHandler<T> = {
     get(target, key) {
@@ -133,7 +133,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
       recordUsage(KEYS_PROPERTY, key);
       return createProxy(
         Reflect.get(target, key),
-        (state[AFFECTED_PROPERTY] as Affected),
+        (state[ACCESSED_PROPERTY] as Accessed),
         state[PROXY_CACHE_PROPERTY],
       );
     },
@@ -174,10 +174,10 @@ const getOriginalObject = <T extends object>(obj: T) => (
  * in order to keep track of which properties were accessed via get/has proxy handlers:
  *
  * NOTE: Printing of WeakMap is hard to inspect and not very readable
- * for this purpose you can use the `affectedToPathList` helper.
+ * for this purpose you can use the `accessedToPathList` helper.
  *
  * @param {object} obj - Object that will be wrapped on the proxy.
- * @param {WeakMap<object, unknown>} affected -
+ * @param {WeakMap<object, unknown>} accessed -
  * WeakMap that will hold the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [proxyCache] -
  * WeakMap that will help keep referential identity for proxies.
@@ -187,20 +187,20 @@ const getOriginalObject = <T extends object>(obj: T) => (
  * import { createProxy } from 'proxy-compare';
  *
  * const original = { a: "1", c: "2", d: { e: "3" } };
- * const affected = new WeakMap();
- * const proxy = createProxy(original, affected);
+ * const accessed = new WeakMap();
+ * const proxy = createProxy(original, accessed);
  *
  * proxy.a // Will mark as used and track its value.
- * // This will update the affected WeakMap with original as key
+ * // This will update the accessed WeakMap with original as key
  * // and a Set with "a"
  *
  * proxy.d // Will mark "d" as accessed to track and proxy itself ({ e: "3" }).
- * // This will update the affected WeakMap with original as key
+ * // This will update the accessed WeakMap with original as key
  * // and a Set with "d"
  */
 export const createProxy = <T>(
   obj: T,
-  affected: WeakMap<object, unknown>,
+  accessed: WeakMap<object, unknown>,
   proxyCache?: WeakMap<object, unknown>,
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
@@ -219,7 +219,7 @@ export const createProxy = <T>(
       proxyCache.set(target, handlerAndState);
     }
   }
-  handlerAndState[1][AFFECTED_PROPERTY] = affected as Affected;
+  handlerAndState[1][ACCESSED_PROPERTY] = accessed as Accessed;
   handlerAndState[1][PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object> | undefined;
   return handlerAndState[1][PROXY_PROPERTY] as typeof target;
 };
@@ -239,49 +239,49 @@ type ChangedCache = WeakMap<object, {
 /**
  * Compare changes on objects.
  *
- * This will compare the affected properties on tracked objects inside the proxy
+ * This will compare the accessed properties on tracked objects inside the proxy
  * to check if there were any changes made to it,
  * by default if no property was accessed on the proxy it will attempt to do a
  * reference equality check for the objects provided (Object.is(a, b)). If you access a property
- * on the proxy, then isChanged will only compare the affected properties.
+ * on the proxy, then isChanged will only compare the accessed properties.
  *
  * @param {object} prevObj - The previous object to compare.
  * @param {object} nextObj - Object to compare with the previous one.
- * @param {WeakMap<object, unknown>} affected -
+ * @param {WeakMap<object, unknown>} accessed -
  * WeakMap that holds the tracking of which properties in the proxied object were accessed.
  * @param {WeakMap<object, unknown>} [cache] -
  * WeakMap that holds a cache of the comparisons for better performance with repetitive comparisons,
  * and to avoid infinite loop with circular structures.
- * @returns {boolean} - Boolean indicating if the affected property on the object has changed.
+ * @returns {boolean} - Boolean indicating if the accessed property on the object has changed.
  *
  * @example
  * import { createProxy, isChanged } from 'proxy-compare';
  *
  * const obj = { a: "1", c: "2", d: { e: "3" } };
- * const affected = new WeakMap();
+ * const accessed = new WeakMap();
  *
- * const proxy = createProxy(obj, affected);
+ * const proxy = createProxy(obj, accessed);
  *
  * proxy.a
  *
- * isChanged(obj, { a: "1" }, affected) // false
+ * isChanged(obj, { a: "1" }, accessed) // false
  *
  * proxy.a = "2"
  *
- * isChanged(obj, { a: "1" }, affected) // true
+ * isChanged(obj, { a: "1" }, accessed) // true
  */
 
 export const isChanged = (
   prevObj: unknown,
   nextObj: unknown,
-  affected: WeakMap<object, unknown>,
+  accessed: WeakMap<object, unknown>,
   cache?: WeakMap<object, unknown>,
 ): boolean => {
   if (Object.is(prevObj, nextObj)) {
     return false;
   }
   if (!isObject(prevObj) || !isObject(nextObj)) return true;
-  const used = (affected as Affected).get(getOriginalObject(prevObj));
+  const used = (accessed as Accessed).get(getOriginalObject(prevObj));
   if (!used) return true;
   if (cache) {
     const hit = (cache as ChangedCache).get(prevObj);
@@ -315,7 +315,7 @@ export const isChanged = (
       changed = isChanged(
         (prevObj as any)[key],
         (nextObj as any)[key],
-        affected,
+        accessed,
         cache,
       );
       if (changed) return changed;
@@ -352,13 +352,13 @@ export const trackMemo = (obj: unknown) => {
  * import { createProxy, getUntracked } from 'proxy-compare';
  *
  * const original = { a: "1", c: "2", d: { e: "3" } };
- * const affected = new WeakMap();
+ * const accessed = new WeakMap();
  *
- * const proxy = createProxy(original, affected);
+ * const proxy = createProxy(original, accessed);
  * const originalFromProxy = getUntracked(proxy)
  *
  * Object.is(original, originalFromProxy) // true
- * isChanged(original, originalFromProxy, affected) // false
+ * isChanged(original, originalFromProxy, accessed) // false
  */
 export const getUntracked = <T>(obj: T): T | null => {
   if (isObjectToTrack(obj)) {
@@ -387,33 +387,33 @@ export const getUntracked = <T>(obj: T): T | null => {
  * markToTrack(nested, false)
  *
  * const original = { a: "1", c: "2", d: nested };
- * const affected = new WeakMap();
+ * const accessed = new WeakMap();
  *
- * const proxy = createProxy(original, affected);
+ * const proxy = createProxy(original, accessed);
  *
  * proxy.d.e
  *
- * isChanged(original, { d: { e: "3" } }, affected) // true
+ * isChanged(original, { d: { e: "3" } }, accessed) // true
  */
 export const markToTrack = (obj: object, mark = true) => {
   objectsToTrack.set(obj, mark);
 };
 
 /**
- * Convert `affected` to path list
+ * Convert `accessed` to a list of paths
  *
- * `affected` is a weak map which is not printable.
+ * `accessed` is a weak map which is not printable.
  * This function is can convert it to printable path list.
  * It's for debugging purpose.
  *
  * @param obj - An object that is used with `createProxy`.
- * @param affected - A weak map that is used with `createProxy`.
+ * @param accessed - A weak map that is used with `createProxy`.
  * @param onlyWithValues - An optional boolean to exclude object getters.
  * @returns - An array of paths.
  */
-export const affectedToPathList = (
+export const getPathList = (
   obj: unknown,
-  affected: WeakMap<object, unknown>,
+  accessed: WeakMap<object, unknown>,
   onlyWithValues?: boolean,
 ) => {
   const list: (string | symbol)[][] = [];
@@ -426,7 +426,7 @@ export const affectedToPathList = (
     if (isObject(x)) {
       seen.add(x);
     }
-    const used = isObject(x) && (affected as Affected).get(getOriginalObject(x));
+    const used = isObject(x) && (accessed as Accessed).get(getOriginalObject(x));
     if (used) {
       used[HAS_KEY_PROPERTY]?.forEach((key) => {
         const segment = `:has(${String(key)})`;
@@ -453,6 +453,21 @@ export const affectedToPathList = (
   walk(obj);
   return list;
 };
+
+/**
+ * Convert `accessed` to a list of paths
+ *
+ * `accessed` is a weak map which is not printable.
+ * This function is can convert it to printable path list.
+ * It's for debugging purpose.
+ *
+ * @param obj - An object that is used with `createProxy`.
+ * @param accessed - A weak map that is used with `createProxy`.
+ * @param onlyWithValues - An optional boolean to exclude object getters.
+ * @deprecated - Use `getPathList` instead.
+ * @returns - An array of paths.
+ */
+export const affectedToPathList = getPathList
 
 /**
  * replace newProxy function.

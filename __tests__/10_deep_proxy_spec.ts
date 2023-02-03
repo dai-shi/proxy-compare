@@ -1,4 +1,4 @@
-import { createProxy, isChanged, affectedToPathList } from '../src/index';
+import { createProxy, isChanged, getPathList } from '../src/index';
 
 const noop = (_arg: unknown) => {
   // do nothing
@@ -137,7 +137,7 @@ describe('keys spec', () => {
     expect(isChanged(s1, { a: { b: 'b' }, c: 'c' }, a1)).toBe(false);
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(true);
     expect(isChanged(s1, { a: s1.a, c: 'c', d: 'd' }, a1)).toBe(true);
-    expect(affectedToPathList(s1, a1)).toEqual([[':ownKeys']]);
+    expect(getPathList(s1, a1)).toEqual([[':ownKeys']]);
   });
 
   it('for-in', () => {
@@ -163,7 +163,7 @@ describe('keys spec', () => {
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(false);
     expect(isChanged(s1, { a: null }, a1)).toBe(false);
     expect(isChanged(s1, { c: 'c', d: 'd' }, a1)).toBe(true);
-    expect(affectedToPathList(s1, a1)).toEqual([[':has(a)']]);
+    expect(getPathList(s1, a1)).toEqual([[':has(a)']]);
   });
 
   it('hasOwnProperty', () => {
@@ -175,7 +175,7 @@ describe('keys spec', () => {
     expect(isChanged(s1, { a: s1.a }, a1)).toBe(false);
     expect(isChanged(s1, { a: null, c: 'c' }, a1)).toBe(false);
     expect(isChanged(s1, { c: 'c', d: 'd' }, a1)).toBe(true);
-    expect(affectedToPathList(s1, a1)).toEqual([[':hasOwn(a)']]);
+    expect(getPathList(s1, a1)).toEqual([[':hasOwn(a)']]);
   });
 });
 
@@ -196,7 +196,7 @@ describe('special objects spec', () => {
     const s3: any = { a: 'a2' };
     s3.self = s3;
     expect(isChanged(s1, s3, a1, c1)).toBe(true);
-    expect(affectedToPathList(s1, a1)).toEqual([['a']]);
+    expect(getPathList(s1, a1)).toEqual([['a']]);
   });
 
   it('object with cycles 2', () => {
@@ -212,7 +212,7 @@ describe('special objects spec', () => {
     const s2: any = { a: { b: 'b' } };
     s2.self = s2;
     expect(isChanged(s1, s2, a1, c1)).toBe(true);
-    expect(affectedToPathList(s1, a1)).toEqual([['a']]);
+    expect(getPathList(s1, a1)).toEqual([['a']]);
   });
 
   it('frozen object', () => {

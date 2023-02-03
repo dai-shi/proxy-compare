@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- feat: Rename `affectedToPathList` to `getPathList`
 
 ## [2.4.0] - 2023-01-04
 ### Added

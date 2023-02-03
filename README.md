@@ -57,7 +57,7 @@ This function will create a proxy at top level and proxy nested objects as you a
 in order to keep track of which properties were accessed via get/has proxy handlers:
 
 NOTE: Printing of WeakMap is hard to inspect and not very readable
-for this purpose you can use the `affectedToPathList` helper.
+for this purpose you can use the `getPathList` helper.
 
 #### Parameters
 
@@ -192,13 +192,13 @@ isChanged(original, { d: { e: "3" } }, accessed) // true
 
 Returns **any** No return.
 
-### affectedToPathList
+### getPathList
 
-Convert `accessed` to path list
+Convert `accessed` to path list.
 
-`accessed` is a weak map which is not printable.
-This function is can convert it to printable path list.
-It's for debugging purpose.
+Because `accessed` is a WeakMap, it is not easily printable by `console.log` or `accessed.toString()`.
+
+Instead, `getPathList` allows converting `accessed` to a printable path list, primarily for debugging purposes.
 
 #### Parameters
 
