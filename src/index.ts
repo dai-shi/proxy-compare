@@ -491,7 +491,7 @@ export const getPathList = (
  * @deprecated - Use `getPathList` instead.
  * @returns - An array of paths.
  */
-export const affectedToPathList = getPathList
+export const affectedToPathList = getPathList;
 
 /**
  * replace newProxy function.
