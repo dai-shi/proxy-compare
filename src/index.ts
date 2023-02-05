@@ -50,23 +50,16 @@ const isFrozen = (obj: object) => (
 );
 
 // copy frozen object
-const unfrozenCache = new WeakMap<object, object>();
 const unfreeze = <T extends object>(obj: T): T => {
-  let unfrozen = unfrozenCache.get(obj);
-  if (!unfrozen) {
-    if (Array.isArray(obj)) {
-      // Arrays need a special way to copy
-      unfrozen = Array.from(obj);
-    } else {
-      // For non-array objects, we create a new object keeping the prototype
-      // with changing all configurable options (otherwise, proxies will complain)
-      const descriptors = Object.getOwnPropertyDescriptors(obj);
-      Object.values(descriptors).forEach((desc) => { desc.configurable = true; });
-      unfrozen = Object.create(getProto(obj), descriptors);
-    }
-    unfrozenCache.set(obj, unfrozen as object);
+  if (Array.isArray(obj)) {
+    // Arrays need a special way to copy
+    return Array.from(obj) as T;
   }
-  return unfrozen as T;
+  // For non-array objects, we create a new object keeping the prototype
+  // with changing all configurable options (otherwise, proxies will complain)
+  const descriptors = Object.getOwnPropertyDescriptors(obj);
+  Object.values(descriptors).forEach((desc) => { desc.configurable = true; });
+  return Object.create(getProto(obj), descriptors);
 };
 
 type HasKeySet = Set<string | symbol>
