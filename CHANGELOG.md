@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- fix: remove unfrozen cache #53
 
 ## [2.4.0] - 2023-01-04
 ### Added
