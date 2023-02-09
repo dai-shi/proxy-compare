@@ -229,7 +229,7 @@ describe('special objects spec', () => {
     expect(() => { delete p1.c; }).toThrow();
   });
 
-  it('object with defineProperty (non-configurable and non-writable)', () => {
+  it('object with defineProperty (non-configurable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
     Object.defineProperty(s1, 'a', { value: { b: 'b' } });

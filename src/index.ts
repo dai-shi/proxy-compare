@@ -41,10 +41,10 @@ const isObject = (x: unknown): x is object => (
 // check if frozen
 const isFrozen = (obj: object) => (
   Object.isFrozen(obj) || (
-    // Object.isFrozen() doesn't detect non-writable properties
+    // Object.isFrozen() doesn't detect non-configurable properties
     // See: https://github.com/dai-shi/proxy-compare/pull/8
     Object.values(Object.getOwnPropertyDescriptors(obj)).some(
-      (descriptor) => !descriptor.writable,
+      (descriptor) => !descriptor.configurable,
     )
   )
 );
