@@ -41,9 +41,11 @@ const isObject = (x: unknown): x is object => (
 // Even if an object is not frozen, any non-configurable _and_ non-writeable properties
 // (which Object.freeze does also do) will break the proxy get trap.
 // See: https://github.com/dai-shi/proxy-compare/pull/8
-const hasFrozenishProperties = (obj: object) => (
-  Object.values(Object.getOwnPropertyDescriptors(obj)).some(
-    (descriptor) => !descriptor.configurable && !descriptor.writable,
+const isEffectivelyFrozen = (obj: object) => (
+  Object.isFrozen(obj) || (
+    Object.values(Object.getOwnPropertyDescriptors(obj)).some(
+      (descriptor) => !descriptor.configurable && !descriptor.writable,
+    )
   )
 );
 
@@ -202,7 +204,7 @@ export const createProxy = <T>(
   // we must make a copy for the proxy to work, and to avoid the user mutating _other_
   // non-frozen properties (that would go to our internal copy & be lost), we just treat
   // the entire object as frozen.
-  const frozen = hasFrozenishProperties(target);
+  const frozen = isEffectivelyFrozen(target);
   let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
