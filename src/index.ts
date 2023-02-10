@@ -38,16 +38,17 @@ const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
 
-// Object.isFrozen() doesn't detect non-configurable properties
+// Even if an object is not frozen, any non-configurable _and_ non-writeable properties
+// (which Object.freeze does also do) will break the proxy get trap.
 // See: https://github.com/dai-shi/proxy-compare/pull/8
-const hasNonConfigurableProperties = (obj: object) => (
+const hasFrozenishProperties = (obj: object) => (
   Object.values(Object.getOwnPropertyDescriptors(obj)).some(
-    (descriptor) => !descriptor.configurable,
+    (descriptor) => !descriptor.configurable && !descriptor.writable,
   )
 );
 
-// Proxy get traps don't work on non-configurable properties, so make a copy
-const configureableCopy = <T extends object>(obj: T): T => {
+// Make a copy with all descriptors marked as configurable.
+const proxyFriendlyCopy = <T extends object>(obj: T): T => {
   if (Array.isArray(obj)) {
     // Arrays need a special way to copy
     return Array.from(obj) as T;
@@ -202,7 +203,7 @@ export const createProxy = <T>(
   if (!handlerAndState || handlerAndState[1][FROZEN_PROPERTY] !== frozen) {
     handlerAndState = createProxyHandler<typeof target>(target, frozen);
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
-      hasNonConfigurableProperties(target) ? configureableCopy(target) : target,
+      hasFrozenishProperties(target) ? proxyFriendlyCopy(target) : target,
       handlerAndState[0],
     );
     if (proxyCache) {
