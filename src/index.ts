@@ -46,7 +46,7 @@ const hasNonConfigurableProperties = (obj: object) => (
   )
 );
 
-// Proxy get traps don't work on configurable: false properties, so make a copy
+// Proxy get traps don't work on non-configurable properties, so make a copy
 const configureableCopy = <T extends object>(obj: T): T => {
   if (Array.isArray(obj)) {
     // Arrays need a special way to copy
