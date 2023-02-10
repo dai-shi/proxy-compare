@@ -231,7 +231,7 @@ describe('special objects spec', () => {
 
   it('object with defineProperty (value, non-configurable & non-writeable)', () => {
     const proxyCache = new WeakMap();
-    const s1: any = {};
+    const s1: any = { c: 'c' };
     Object.defineProperty(s1, 'a', { value: { b: 'b' } });
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
@@ -239,6 +239,15 @@ describe('special objects spec', () => {
     expect(isChanged(s1, s1, a1)).toBe(false);
     expect(isChanged(s1, { a: { b: 'b' } }, a1)).toBe(false);
     expect(isChanged(s1, { a: { b: 'b2' } }, a1)).toBe(true);
+    // Even though we've made a configurable copy, it is still non-writable, which is good b/c the
+    // new value would go to the internal proxyFriendlyCopy copy we'd made.
+    expect(() => {
+      p1.a = { b: 'b2' };
+    }).toThrowError("Cannot assign to read only property 'a'");
+    // And because it is a copy, it is readonly for all properties
+    expect(() => {
+      p1.c = 'c2';
+    }).toThrowError("Cannot assign to read only property 'c'");
   });
 
   it('object with defineProperty (non-configurable but writable)', () => {

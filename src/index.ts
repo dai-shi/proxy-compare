@@ -146,7 +146,9 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
     },
   };
   if (frozen) {
-    handler.set = handler.deleteProperty = () => false;
+    handler.set = handler.deleteProperty = (_target, key) => {
+      throw new Error(`Cannot assign to read only property '${String(key)}'`);
+    };
   }
   return [handler, state] as const;
 };
@@ -196,14 +198,18 @@ export const createProxy = <T>(
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
   const target = getOriginalObject(obj);
-  const frozen = Object.isFrozen(target);
+  // Even if target is not technically `Object.frozen`, if there are any frozen-ish properties,
+  // we must make a copy for the proxy to work, and to avoid the user mutating _other_
+  // non-frozen properties (that would go to our internal copy & be lost), we just treat
+  // the entire object as frozen.
+  const frozen = hasFrozenishProperties(target);
   let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
   if (!handlerAndState || handlerAndState[1][FROZEN_PROPERTY] !== frozen) {
     handlerAndState = createProxyHandler<typeof target>(target, frozen);
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
-      hasFrozenishProperties(target) ? proxyFriendlyCopy(target) : target,
+      frozen ? proxyFriendlyCopy(target) : target,
       handlerAndState[0],
     );
     if (proxyCache) {
