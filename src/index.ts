@@ -38,19 +38,16 @@ const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
 
-// check if frozen
-const isFrozen = (obj: object) => (
-  Object.isFrozen(obj) || (
-    // Object.isFrozen() doesn't detect non-configurable properties
-    // See: https://github.com/dai-shi/proxy-compare/pull/8
-    Object.values(Object.getOwnPropertyDescriptors(obj)).some(
-      (descriptor) => !descriptor.configurable,
-    )
+// Object.isFrozen() doesn't detect non-configurable properties
+// See: https://github.com/dai-shi/proxy-compare/pull/8
+const hasNonConfigurableProperties = (obj: object) => (
+  Object.values(Object.getOwnPropertyDescriptors(obj)).some(
+    (descriptor) => !descriptor.configurable,
   )
 );
 
-// copy frozen object
-const unfreeze = <T extends object>(obj: T): T => {
+// Proxy get traps don't work on configurable: false properties, so make a copy
+const configureableCopy = <T extends object>(obj: T): T => {
   if (Array.isArray(obj)) {
     // Arrays need a special way to copy
     return Array.from(obj) as T;
@@ -198,14 +195,14 @@ export const createProxy = <T>(
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
   const target = getOriginalObject(obj);
-  const frozen = isFrozen(target);
+  const frozen = Object.isFrozen(target);
   let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
   if (!handlerAndState || handlerAndState[1][FROZEN_PROPERTY] !== frozen) {
     handlerAndState = createProxyHandler<typeof target>(target, frozen);
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
-      frozen ? unfreeze(target) : target,
+      hasNonConfigurableProperties(target) ? configureableCopy(target) : target,
       handlerAndState[0],
     );
     if (proxyCache) {
