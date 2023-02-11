@@ -148,9 +148,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
     },
   };
   if (frozen) {
-    handler.set = handler.deleteProperty = (_target, key) => {
-      throw new Error(`Cannot assign to read only property '${String(key)}'`);
-    };
+    handler.set = handler.deleteProperty = () => false;
   }
   return [handler, state] as const;
 };

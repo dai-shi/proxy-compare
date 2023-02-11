@@ -243,11 +243,11 @@ describe('special objects spec', () => {
     // new value would go to the internal proxyFriendlyCopy copy we'd made.
     expect(() => {
       p1.a = { b: 'b2' };
-    }).toThrowError("Cannot assign to read only property 'a'");
+    }).toThrowError("'set' on proxy: trap returned falsish for property 'a'");
     // And because it is a copy, it is readonly for all properties
     expect(() => {
       p1.c = 'c2';
-    }).toThrowError("Cannot assign to read only property 'c'");
+    }).toThrowError("'set' on proxy: trap returned falsish for property 'c'");
   });
 
   it('object with defineProperty (non-configurable but writable)', () => {
