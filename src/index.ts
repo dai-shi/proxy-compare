@@ -4,7 +4,7 @@ const GET_ORIGINAL_SYMBOL = Symbol();
 
 // properties
 const AFFECTED_PROPERTY = 'a';
-const FROZEN_PROPERTY = 'f';
+const IS_TARGET_COPIED_PROPERTY = 'f';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const NEXT_OBJECT_PROPERTY = 'n';
@@ -41,16 +41,14 @@ const isObject = (x: unknown): x is object => (
 // Even if an object is not frozen, any non-configurable _and_ non-writeable properties
 // (which Object.freeze does also do) will break the proxy get trap.
 // See: https://github.com/dai-shi/proxy-compare/pull/8
-const isEffectivelyFrozen = (obj: object) => (
-  Object.isFrozen(obj) || (
-    Object.values(Object.getOwnPropertyDescriptors(obj)).some(
-      (descriptor) => !descriptor.configurable && !descriptor.writable,
-    )
+const needsToCopyTargetObject = (obj: object) => (
+  Object.values(Object.getOwnPropertyDescriptors(obj)).some(
+    (descriptor) => !descriptor.configurable && !descriptor.writable,
   )
 );
 
 // Make a copy with all descriptors marked as configurable.
-const proxyFriendlyCopy = <T extends object>(obj: T): T => {
+const copyTargetObject = <T extends object>(obj: T): T => {
   if (Array.isArray(obj)) {
     // Arrays need a special way to copy
     return Array.from(obj) as T;
@@ -73,7 +71,7 @@ type Used = {
 };
 type Affected = WeakMap<object, Used>;
 type ProxyHandlerState<T extends object> = {
-  readonly [FROZEN_PROPERTY]: boolean;
+  readonly [IS_TARGET_COPIED_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object> | undefined;
   [AFFECTED_PROPERTY]?: Affected;
@@ -83,9 +81,9 @@ type ProxyCache<T extends object> = WeakMap<
   readonly [ProxyHandler<T>, ProxyHandlerState<T>]
 >;
 
-const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
+const createProxyHandler = <T extends object>(origObj: T, isTargetCopied: boolean) => {
   const state: ProxyHandlerState<T> = {
-    [FROZEN_PROPERTY]: frozen,
+    [IS_TARGET_COPIED_PROPERTY]: isTargetCopied,
   };
   let trackObject = false; // for trackMemo
   const recordUsage = (
@@ -147,7 +145,7 @@ const createProxyHandler = <T extends object>(origObj: T, frozen: boolean) => {
       return Reflect.ownKeys(target);
     },
   };
-  if (frozen) {
+  if (isTargetCopied) {
     handler.set = handler.deleteProperty = () => false;
   }
   return [handler, state] as const;
@@ -202,14 +200,17 @@ export const createProxy = <T>(
   // we must make a copy for the proxy to work, and to avoid the user mutating _other_
   // non-frozen properties (that would go to our internal copy & be lost), we just treat
   // the entire object as frozen.
-  const frozen = isEffectivelyFrozen(target);
+  const isTargetCopied = needsToCopyTargetObject(target);
   let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
-  if (!handlerAndState || handlerAndState[1][FROZEN_PROPERTY] !== frozen) {
-    handlerAndState = createProxyHandler<typeof target>(target, frozen);
+  if (
+    !handlerAndState
+    || handlerAndState[1][IS_TARGET_COPIED_PROPERTY] !== isTargetCopied
+  ) {
+    handlerAndState = createProxyHandler<typeof target>(target, isTargetCopied);
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
-      frozen ? proxyFriendlyCopy(target) : target,
+      isTargetCopied ? copyTargetObject(target) : target,
       handlerAndState[0],
     );
     if (proxyCache) {
