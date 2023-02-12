@@ -38,8 +38,10 @@ const isObject = (x: unknown): x is object => (
   typeof x === 'object' && x !== null
 );
 
-// Even if an object is not frozen, any non-configurable _and_ non-writeable properties
-// (which Object.freeze does also do) will break the proxy get trap.
+// Properties that are both non-configurable and non-writable will break
+// the proxy get trap when we try to return a recursive/child compare proxy
+// from them. We can avoid this by making a copy of the target object with
+// all descriptors marked as configurable, see `copyTargetObject`.
 // See: https://github.com/dai-shi/proxy-compare/pull/8
 const needsToCopyTargetObject = (obj: object) => (
   Object.values(Object.getOwnPropertyDescriptors(obj)).some(
@@ -196,10 +198,6 @@ export const createProxy = <T>(
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
   const target = getOriginalObject(obj);
-  // Even if target is not technically `Object.frozen`, if there are any frozen-ish properties,
-  // we must make a copy for the proxy to work, and to avoid the user mutating _other_
-  // non-frozen properties (that would go to our internal copy & be lost), we just treat
-  // the entire object as frozen.
   const isTargetCopied = needsToCopyTargetObject(target);
   let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
