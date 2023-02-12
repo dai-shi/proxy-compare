@@ -229,7 +229,7 @@ describe('special objects spec', () => {
     expect(() => { delete p1.c; }).toThrow();
   });
 
-  it('object with defineProperty (value, non-configurable & non-writeable)', () => {
+  it('object with defineProperty (value only, implying non-configurable & non-writeable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = { c: 'c' };
     Object.defineProperty(s1, 'a', { value: { b: 'b' } });
@@ -250,7 +250,16 @@ describe('special objects spec', () => {
     }).toThrowError("'set' on proxy: trap returned falsish for property 'c'");
   });
 
-  it('object with defineProperty (non-configurable but writable)', () => {
+  it('object with defineProperty (value, non-configurable and not-writable)', () => {
+    const proxyCache = new WeakMap();
+    const s1: any = {};
+    Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: false, writable: false });
+    const a1 = new WeakMap();
+    const p1 = createProxy(s1, a1, proxyCache);
+    noop(p1.a.b);
+  });
+
+  it('object with defineProperty (value, non-configurable but writable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
     Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: false, writable: true });
@@ -259,7 +268,7 @@ describe('special objects spec', () => {
     noop(p1.a.b);
   });
 
-  it('object with defineProperty (configurable but not-writable)', () => {
+  it('object with defineProperty (vaule, configurable but not-writable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
     Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: true, writable: false });
@@ -268,10 +277,10 @@ describe('special objects spec', () => {
     noop(p1.a.b);
   });
 
-  it('object with defineProperty (non-configurable and not-writable)', () => {
+  it('object with defineProperty (getter, non-configurable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
-    Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: false, writable: false });
+    Object.defineProperty(s1, 'a', { get() { return { b: 'b' }; }, configurable: false });
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a.b);
