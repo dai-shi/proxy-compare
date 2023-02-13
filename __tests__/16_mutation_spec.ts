@@ -1,27 +1,10 @@
-import {
-  affectedToPathList,
-  createProxy,
-  markToTrack,
-} from '../src/index';
+import { affectedToPathList, createProxy, markToTrack } from '../src/index';
 
 const noop = (_arg: unknown) => {
   // do nothing
 };
 
 describe('mutation spec (this usage is not officially supported)', () => {
-  class Counter {
-    count = 1;
-
-    get doubled() {
-      return this.count;
-    }
-
-    set doubled(v) {
-      // XXX mutation usage is not supported by proxy-compare
-      this.count = v / 2;
-    }
-  }
-
   it('object getters & setters', () => {
     const obj = {
       count: 1,
@@ -57,6 +40,18 @@ describe('mutation spec (this usage is not officially supported)', () => {
   });
 
   it('class getters & setters', () => {
+    class Counter {
+      count = 1;
+
+      get doubled() {
+        return this.count;
+      }
+
+      set doubled(v) {
+        // XXX mutation usage is not supported by proxy-compare
+        this.count = v / 2;
+      }
+    }
     const obj = new Counter();
     markToTrack(obj);
     const proxyCache = new WeakMap();
