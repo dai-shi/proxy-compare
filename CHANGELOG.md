@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- feat: optional target cache for performance #56
 
 ## [2.4.2] - 2023-02-13
 ### Changed
