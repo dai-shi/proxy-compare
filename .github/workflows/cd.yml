@@ -14,6 +14,11 @@ jobs:
           node-version: 18
       - run: npm test
       - run: npm run compile
+      - name: Setup Node Again
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
