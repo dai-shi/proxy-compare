@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- fix: fix: Don't unfreeze/copy targets w/object getters. #54
 
 ## [2.4.1] - 2023-02-07
 ### Changed
