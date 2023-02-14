@@ -82,6 +82,10 @@ type ProxyCache<T extends object> = WeakMap<
   object,
   readonly [ProxyHandler<T>, ProxyHandlerState<T>]
 >;
+type TargetCache<T extends object> = WeakMap<
+  object,
+  readonly [target: T, copiedTarget?: T]
+>;
 
 const createProxyHandler = <T extends object>(origObj: T, isTargetCopied: boolean) => {
   const state: ProxyHandlerState<T> = {
@@ -195,20 +199,32 @@ export const createProxy = <T>(
   obj: T,
   affected: WeakMap<object, unknown>,
   proxyCache?: WeakMap<object, unknown>,
+  targetCache?: WeakMap<object, unknown>,
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
-  const target = getOriginalObject(obj);
-  const isTargetCopied = needsToCopyTargetObject(target);
+  let targetAndCopied = (
+    targetCache && (targetCache as TargetCache<typeof obj>).get(obj)
+  );
+  if (!targetAndCopied) {
+    const target = getOriginalObject(obj);
+    if (needsToCopyTargetObject(target)) {
+      targetAndCopied = [target, copyTargetObject(target)];
+    } else {
+      targetAndCopied = [target];
+    }
+    targetCache?.set(obj, targetAndCopied);
+  }
+  const [target, copiedTarget] = targetAndCopied;
   let handlerAndState = (
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target)
   );
   if (
     !handlerAndState
-    || handlerAndState[1][IS_TARGET_COPIED_PROPERTY] !== isTargetCopied
+    || handlerAndState[1][IS_TARGET_COPIED_PROPERTY] !== !!copiedTarget
   ) {
-    handlerAndState = createProxyHandler<typeof target>(target, isTargetCopied);
+    handlerAndState = createProxyHandler<typeof target>(target, !!copiedTarget);
     handlerAndState[1][PROXY_PROPERTY] = newProxy(
-      isTargetCopied ? copyTargetObject(target) : target,
+      copiedTarget || target,
       handlerAndState[0],
     );
     if (proxyCache) {
