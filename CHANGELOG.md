@@ -1,12 +1,14 @@
 # Change Log
 
 ## [Unreleased]
+
+## [2.5.0] - 2023-02-14
 ### Added
 - feat: optional target cache for performance #56
 
 ## [2.4.2] - 2023-02-13
 ### Changed
-- fix: fix: Don't unfreeze/copy targets w/object getters. #54
+- fix: Don't unfreeze/copy targets w/object getters. #54
 
 ## [2.4.1] - 2023-02-07
 ### Changed
