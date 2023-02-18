@@ -9,7 +9,9 @@ Compare two objects using accessed properties with Proxy
 
 ## Introduction
 
-This is an internal library used in [React Tracked](https://react-tracked.js.org).
+This is an internal library used in: 
+1.[React Tracked](https://react-tracked.js.org).
+2.[Valtio](https://github.com/pmndrs/valtio).
 
 ## Install
 
