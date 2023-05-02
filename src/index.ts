@@ -43,11 +43,17 @@ const isObject = (x: unknown): x is object => (
 // from them. We can avoid this by making a copy of the target object with
 // all descriptors marked as configurable, see `copyTargetObject`.
 // See: https://github.com/dai-shi/proxy-compare/pull/8
-const needsToCopyTargetObject = (obj: object) => (
-  Object.values(Object.getOwnPropertyDescriptors(obj)).some(
+const copiedTargetCache = new WeakMap();
+const needsToCopyTargetObject = (obj: object) => {
+  if (!Object.isFrozen(obj) && copiedTargetCache.has(obj)) {
+    return copiedTargetCache.get(obj)!;
+  }
+  const result = Object.values(Object.getOwnPropertyDescriptors(obj)).some(
     (descriptor) => !descriptor.configurable && !descriptor.writable,
-  )
-);
+  );
+  copiedTargetCache.set(obj, result);
+  return result;
+};
 
 // Make a copy with all descriptors marked as configurable.
 const copyTargetObject = <T extends object>(obj: T): T => {
