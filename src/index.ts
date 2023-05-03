@@ -7,6 +7,7 @@ const AFFECTED_PROPERTY = 'a';
 const IS_TARGET_COPIED_PROPERTY = 'f';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
+const TARGET_CACHE_PROPERTY = 't';
 const NEXT_OBJECT_PROPERTY = 'n';
 const CHANGED_PROPERTY = 'g';
 const HAS_KEY_PROPERTY = 'h';
@@ -43,17 +44,11 @@ const isObject = (x: unknown): x is object => (
 // from them. We can avoid this by making a copy of the target object with
 // all descriptors marked as configurable, see `copyTargetObject`.
 // See: https://github.com/dai-shi/proxy-compare/pull/8
-const copiedTargetCache = new WeakMap();
-const needsToCopyTargetObject = (obj: object) => {
-  if (!Object.isFrozen(obj) && copiedTargetCache.has(obj)) {
-    return copiedTargetCache.get(obj)!;
-  }
-  const result = Object.values(Object.getOwnPropertyDescriptors(obj)).some(
+const needsToCopyTargetObject = (obj: object) => (
+  Object.values(Object.getOwnPropertyDescriptors(obj)).some(
     (descriptor) => !descriptor.configurable && !descriptor.writable,
-  );
-  copiedTargetCache.set(obj, result);
-  return result;
-};
+  )
+);
 
 // Make a copy with all descriptors marked as configurable.
 const copyTargetObject = <T extends object>(obj: T): T => {
@@ -82,6 +77,7 @@ type ProxyHandlerState<T extends object> = {
   readonly [IS_TARGET_COPIED_PROPERTY]: boolean;
   [PROXY_PROPERTY]?: T;
   [PROXY_CACHE_PROPERTY]?: ProxyCache<object> | undefined;
+  [TARGET_CACHE_PROPERTY]?: TargetCache<object> | undefined;
   [AFFECTED_PROPERTY]?: Affected;
 }
 type ProxyCache<T extends object> = WeakMap<
@@ -138,6 +134,7 @@ const createProxyHandler = <T extends object>(origObj: T, isTargetCopied: boolea
         Reflect.get(target, key),
         (state[AFFECTED_PROPERTY] as Affected),
         state[PROXY_CACHE_PROPERTY],
+        state[TARGET_CACHE_PROPERTY]
       );
     },
     has(target, key) {
@@ -239,6 +236,7 @@ export const createProxy = <T>(
   }
   handlerAndState[1][AFFECTED_PROPERTY] = affected as Affected;
   handlerAndState[1][PROXY_CACHE_PROPERTY] = proxyCache as ProxyCache<object> | undefined;
+  handlerAndState[1][TARGET_CACHE_PROPERTY] = targetCache as TargetCache<object> | undefined;
   return handlerAndState[1][PROXY_PROPERTY] as typeof target;
 };
 
