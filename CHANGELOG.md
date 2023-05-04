@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Changed
+- fix: reuse target cache for inner createProxy runs #59
 
 ## [2.5.0] - 2023-02-14
 ### Added
