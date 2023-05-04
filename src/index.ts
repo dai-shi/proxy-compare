@@ -134,7 +134,7 @@ const createProxyHandler = <T extends object>(origObj: T, isTargetCopied: boolea
         Reflect.get(target, key),
         (state[AFFECTED_PROPERTY] as Affected),
         state[PROXY_CACHE_PROPERTY],
-        state[TARGET_CACHE_PROPERTY]
+        state[TARGET_CACHE_PROPERTY],
       );
     },
     has(target, key) {
