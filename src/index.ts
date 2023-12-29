@@ -292,12 +292,13 @@ export const isChanged = (
   nextObj: unknown,
   affected: WeakMap<object, unknown>,
   cache?: WeakMap<object, unknown>,
+  baseObj = prevObj,
 ): boolean => {
   if (Object.is(prevObj, nextObj)) {
     return false;
   }
   if (!isObject(prevObj) || !isObject(nextObj)) return true;
-  const used = (affected as Affected).get(getOriginalObject(prevObj));
+  const used = (affected as Affected).get(getOriginalObject(baseObj as object));
   if (!used) return true;
   if (cache) {
     const hit = (cache as ChangedCache).get(prevObj);
@@ -333,6 +334,7 @@ export const isChanged = (
         (nextObj as any)[key],
         affected,
         cache,
+        (baseObj as any)[key],
       );
       if (changed) return changed;
     }
