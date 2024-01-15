@@ -292,8 +292,9 @@ export const isChanged = (
   nextObj: unknown,
   affected: WeakMap<object, unknown>,
   cache?: WeakMap<object, unknown>,
+  isEqual: (a: unknown, b: unknown) => boolean = Object.is,
 ): boolean => {
-  if (Object.is(prevObj, nextObj)) {
+  if (isEqual(prevObj, nextObj)) {
     return false;
   }
   if (!isObject(prevObj) || !isObject(nextObj)) return true;
@@ -333,6 +334,7 @@ export const isChanged = (
         (nextObj as any)[key],
         affected,
         cache,
+        isEqual,
       );
       if (changed) return changed;
     }
