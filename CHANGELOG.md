@@ -1,6 +1,8 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- feat: custom equality function #67
 
 ## [2.5.1] - 2023-05-04
 ### Changed
