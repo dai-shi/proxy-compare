@@ -1,4 +1,5 @@
-import { createProxy, getUntracked } from '../src/index';
+import { describe, expect, it } from 'vitest';
+import { createProxy, getUntracked } from 'proxy-compare';
 
 const noop = (_arg: unknown) => {
   // do nothing

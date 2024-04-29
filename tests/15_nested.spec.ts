@@ -1,4 +1,5 @@
-import { createProxy, isChanged, affectedToPathList } from '../src/index';
+import { describe, expect, it } from 'vitest';
+import { createProxy, isChanged, affectedToPathList } from 'proxy-compare';
 
 const noop = (_arg: unknown) => {
   // do nothing
@@ -15,15 +16,25 @@ describe('nested proxy spec', () => {
     const p2 = createProxy(s2, a2, proxyCache);
     noop(p2.p.a.c);
     expect(p2.p).toBe(p1);
-    const p11 = createProxy({ a: { b: 'b', c: 'c' } }, new WeakMap(), proxyCache);
-    const p12 = createProxy({ a: { b: 'b2', c: 'c' } }, new WeakMap(), proxyCache);
-    const p13 = createProxy({ a: { b: 'b', c: 'c2' } }, new WeakMap(), proxyCache);
+    const p11 = createProxy(
+      { a: { b: 'b', c: 'c' } },
+      new WeakMap(),
+      proxyCache,
+    );
+    const p12 = createProxy(
+      { a: { b: 'b2', c: 'c' } },
+      new WeakMap(),
+      proxyCache,
+    );
+    const p13 = createProxy(
+      { a: { b: 'b', c: 'c2' } },
+      new WeakMap(),
+      proxyCache,
+    );
     expect(isChanged(s2, { p: p11 }, a2)).toBe(false);
     expect(isChanged(s2, { p: p12 }, a2)).toBe(false);
     expect(isChanged(s2, { p: p13 }, a2)).toBe(true);
-    expect(affectedToPathList(s2, a2)).toEqual([
-      ['p', 'a', 'c'],
-    ]);
+    expect(affectedToPathList(s2, a2)).toEqual([['p', 'a', 'c']]);
   });
 
   it('embed proxy with a property', () => {
@@ -37,18 +48,27 @@ describe('nested proxy spec', () => {
     noop(p2.p.a.c);
     noop(p2.d);
     expect(p2.p).toBe(p1);
-    const p11 = createProxy({ a: { b: 'b', c: 'c' } }, new WeakMap(), proxyCache);
-    const p12 = createProxy({ a: { b: 'b2', c: 'c' } }, new WeakMap(), proxyCache);
-    const p13 = createProxy({ a: { b: 'b', c: 'c2' } }, new WeakMap(), proxyCache);
+    const p11 = createProxy(
+      { a: { b: 'b', c: 'c' } },
+      new WeakMap(),
+      proxyCache,
+    );
+    const p12 = createProxy(
+      { a: { b: 'b2', c: 'c' } },
+      new WeakMap(),
+      proxyCache,
+    );
+    const p13 = createProxy(
+      { a: { b: 'b', c: 'c2' } },
+      new WeakMap(),
+      proxyCache,
+    );
     expect(isChanged(s2, { p: p11, d: 'd' }, a2)).toBe(false);
     expect(isChanged(s2, { p: p12, d: 'd' }, a2)).toBe(false);
     expect(isChanged(s2, { p: p13, d: 'd' }, a2)).toBe(true);
     expect(isChanged(s2, { p: p11, d: 'd2' }, a2)).toBe(true);
     expect(isChanged(s2, { p: p12, d: 'd2' }, a2)).toBe(true);
     expect(isChanged(s2, { p: p13, d: 'd2' }, a2)).toBe(true);
-    expect(affectedToPathList(s2, a2)).toEqual([
-      ['p', 'a', 'c'],
-      ['d'],
-    ]);
+    expect(affectedToPathList(s2, a2)).toEqual([['p', 'a', 'c'], ['d']]);
   });
 });
