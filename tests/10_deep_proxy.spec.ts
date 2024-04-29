@@ -220,7 +220,7 @@ describe('special objects spec', () => {
 
   it('frozen object', () => {
     const proxyCache = new WeakMap();
-    const s1: { a: { b: string }, c?: string } = { a: { b: 'b' }, c: 'c' };
+    const s1: { a: { b: string }; c?: string } = { a: { b: 'b' }, c: 'c' };
     Object.freeze(s1);
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
@@ -228,8 +228,12 @@ describe('special objects spec', () => {
     expect(isChanged(s1, s1, a1)).toBe(false);
     expect(isChanged(s1, { a: { b: 'b' } }, a1)).toBe(false);
     expect(isChanged(s1, { a: { b: 'b2' } }, a1)).toBe(true);
-    expect(() => { p1.a = { b: 'b3' }; }).toThrow();
-    expect(() => { delete p1.c; }).toThrow();
+    expect(() => {
+      p1.a = { b: 'b3' };
+    }).toThrow();
+    expect(() => {
+      delete p1.c;
+    }).toThrow();
   });
 
   it('object with defineProperty (value only, implying non-configurable & non-writable)', () => {
@@ -256,7 +260,11 @@ describe('special objects spec', () => {
   it('object with defineProperty (value, non-configurable and not-writable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
-    Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: false, writable: false });
+    Object.defineProperty(s1, 'a', {
+      value: { b: 'b' },
+      configurable: false,
+      writable: false,
+    });
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a.b);
@@ -265,7 +273,11 @@ describe('special objects spec', () => {
   it('object with defineProperty (value, non-configurable but writable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
-    Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: false, writable: true });
+    Object.defineProperty(s1, 'a', {
+      value: { b: 'b' },
+      configurable: false,
+      writable: true,
+    });
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a.b);
@@ -274,7 +286,11 @@ describe('special objects spec', () => {
   it('object with defineProperty (vaule, configurable but not-writable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
-    Object.defineProperty(s1, 'a', { value: { b: 'b' }, configurable: true, writable: false });
+    Object.defineProperty(s1, 'a', {
+      value: { b: 'b' },
+      configurable: true,
+      writable: false,
+    });
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a.b);
@@ -283,7 +299,12 @@ describe('special objects spec', () => {
   it('object with defineProperty (getter, non-configurable)', () => {
     const proxyCache = new WeakMap();
     const s1: any = {};
-    Object.defineProperty(s1, 'a', { get() { return { b: 'b' }; }, configurable: false });
+    Object.defineProperty(s1, 'a', {
+      get() {
+        return { b: 'b' };
+      },
+      configurable: false,
+    });
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a.b);
@@ -322,7 +343,9 @@ describe('builtin objects spec', () => {
     const p1 = createProxy(s1, a1, proxyCache);
     noop(p1.a.getTime());
     expect(isChanged(s1, s1, a1)).toBe(false);
-    expect(isChanged(s1, { a: new Date('2019-05-11T12:22:29.293Z') }, a1)).toBe(true);
+    expect(isChanged(s1, { a: new Date('2019-05-11T12:22:29.293Z') }, a1)).toBe(
+      true,
+    );
   });
 
   it('regexp', () => {
