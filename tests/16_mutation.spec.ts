@@ -1,4 +1,5 @@
-import { affectedToPathList, createProxy, markToTrack } from '../src/index';
+import { describe, expect, it } from 'vitest';
+import { affectedToPathList, createProxy, markToTrack } from 'proxy-compare';
 
 const noop = (_arg: unknown) => {
   // do nothing

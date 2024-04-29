@@ -1,4 +1,7 @@
-import { createProxy, isChanged, affectedToPathList } from '../src/index';
+/* eslint @typescript-eslint/no-explicit-any: off */
+
+import { describe, expect, it } from 'vitest';
+import { createProxy, isChanged, affectedToPathList } from 'proxy-compare';
 
 const noop = (_arg: unknown) => {
   // do nothing

@@ -1,4 +1,5 @@
-import { createProxy, isChanged, markToTrack } from '../src/index';
+import { describe, expect, it } from 'vitest';
+import { createProxy, isChanged, markToTrack } from 'proxy-compare';
 
 const noop = (_arg: unknown) => {
   // do nothing
