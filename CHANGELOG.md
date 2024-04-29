@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Module-first setup #68
+
+### Removed
+
+- Drop UMD support
+
 ## [2.6.0] - 2024-01-15
 
 ### Added
