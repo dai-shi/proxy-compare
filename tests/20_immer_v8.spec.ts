@@ -26,4 +26,30 @@ describe('immer v8', () => {
     expect(isChanged(s1, { a: { b: 'b' } }, a2)).toBe(false);
     expect(isChanged(s1, { a: { b: 'b2' } }, a2)).toBe(true);
   });
+
+  // See: https://github.com/dai-shi/react-tracked/issues/70
+  it('should work if object is frozen afterward using targetCache', () => {
+    const targetCache = new WeakMap();
+
+    const s1 = { a: { b: 'b' } };
+    const a1 = new WeakMap();
+    const p1 = createProxy(s1, a1, undefined, targetCache);
+    noop(p1.a);
+
+    expect(isChanged(s1, s1, a1)).toBe(false);
+    expect(isChanged(s1, { a: s1.a }, a1)).toBe(false);
+    expect(isChanged(s1, { a: { b: 'b' } }, a1)).toBe(true);
+
+    Object.freeze(s1.a);
+    Object.freeze(s1);
+
+    const a2 = new WeakMap();
+    const p2 = createProxy(s1, a2, undefined, targetCache);
+    noop(p2.a.b);
+
+    expect(isChanged(s1, s1, a2)).toBe(false);
+    expect(isChanged(s1, { a: s1.a }, a2)).toBe(false);
+    expect(isChanged(s1, { a: { b: 'b' } }, a2)).toBe(false);
+    expect(isChanged(s1, { a: { b: 'b2' } }, a2)).toBe(true);
+  });
 });

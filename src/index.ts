@@ -206,18 +206,22 @@ export const createProxy = <T>(
   targetCache?: WeakMap<object, unknown>,
 ): T => {
   if (!isObjectToTrack(obj)) return obj;
-  let targetAndCopied =
-    targetCache && (targetCache as TargetCache<typeof obj>).get(obj);
-  if (!targetAndCopied) {
-    const target = getOriginalObject(obj);
-    if (needsToCopyTargetObject(target)) {
-      targetAndCopied = [target, copyTargetObject(target)];
+
+  const target = getOriginalObject(obj);
+  let copiedTarget;
+
+  if (needsToCopyTargetObject(target)) {
+    const targetAndCopied =
+      targetCache && (targetCache as TargetCache<typeof obj>).get(obj);
+
+    if (targetAndCopied) {
+      copiedTarget = targetAndCopied[1];
     } else {
-      targetAndCopied = [target];
+      copiedTarget = copyTargetObject(target);
+      targetCache?.set(obj, [target, copiedTarget]);
     }
-    targetCache?.set(obj, targetAndCopied);
   }
-  const [target, copiedTarget] = targetAndCopied;
+
   let handlerAndState =
     proxyCache && (proxyCache as ProxyCache<typeof target>).get(target);
   if (
