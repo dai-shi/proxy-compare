@@ -332,7 +332,7 @@ export const isChanged = (
     );
     if (changed) return changed;
   }
-  if (changed === null) changed = true;
+  if (changed === null) throw new Error('invalid used');
   return changed;
 };
 
