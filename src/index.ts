@@ -10,8 +10,6 @@ const IS_TARGET_COPIED_PROPERTY = 'f';
 const PROXY_PROPERTY = 'p';
 const PROXY_CACHE_PROPERTY = 'c';
 const TARGET_CACHE_PROPERTY = 't';
-const NEXT_OBJECT_PROPERTY = 'n';
-const CHANGED_PROPERTY = 'g';
 const HAS_KEY_PROPERTY = 'h';
 const ALL_OWN_KEYS_PROPERTY = 'w';
 const HAS_OWN_KEY_PROPERTY = 'o';
@@ -252,14 +250,6 @@ const isAllOwnKeysChanged = (prevObj: object, nextObj: object) => {
   );
 };
 
-type ChangedCache = WeakMap<
-  object,
-  {
-    [NEXT_OBJECT_PROPERTY]: object;
-    [CHANGED_PROPERTY]: boolean;
-  }
->;
-
 /**
  * Compare changes on objects.
  *
@@ -299,7 +289,7 @@ export const isChanged = (
   prevObj: unknown,
   nextObj: unknown,
   affected: WeakMap<object, unknown>,
-  cache?: WeakMap<object, unknown>,
+  cache?: WeakMap<object, unknown>, // for object with cycles
   isEqual: (a: unknown, b: unknown) => boolean = Object.is,
 ): boolean => {
   if (isEqual(prevObj, nextObj)) {
@@ -309,53 +299,41 @@ export const isChanged = (
   const used = (affected as Affected).get(getOriginalObject(prevObj));
   if (!used) return true;
   if (cache) {
-    const hit = (cache as ChangedCache).get(prevObj);
-    if (hit && hit[NEXT_OBJECT_PROPERTY] === nextObj) {
-      return hit[CHANGED_PROPERTY];
+    const hit = cache.get(prevObj);
+    if (hit === nextObj) {
+      return false;
     }
     // for object with cycles
-    (cache as ChangedCache).set(prevObj, {
-      [NEXT_OBJECT_PROPERTY]: nextObj,
-      [CHANGED_PROPERTY]: false,
-    });
+    cache.set(prevObj, nextObj);
   }
   let changed: boolean | null = null;
-  try {
-    for (const key of used[HAS_KEY_PROPERTY] || []) {
-      changed = Reflect.has(prevObj, key) !== Reflect.has(nextObj, key);
+  for (const key of used[HAS_KEY_PROPERTY] || []) {
+    changed = Reflect.has(prevObj, key) !== Reflect.has(nextObj, key);
+    if (changed) return changed;
+  }
+  if (used[ALL_OWN_KEYS_PROPERTY] === true) {
+    changed = isAllOwnKeysChanged(prevObj, nextObj);
+    if (changed) return changed;
+  } else {
+    for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
+      const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevObj, key);
+      const hasNext = !!Reflect.getOwnPropertyDescriptor(nextObj, key);
+      changed = hasPrev !== hasNext;
       if (changed) return changed;
-    }
-    if (used[ALL_OWN_KEYS_PROPERTY] === true) {
-      changed = isAllOwnKeysChanged(prevObj, nextObj);
-      if (changed) return changed;
-    } else {
-      for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
-        const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevObj, key);
-        const hasNext = !!Reflect.getOwnPropertyDescriptor(nextObj, key);
-        changed = hasPrev !== hasNext;
-        if (changed) return changed;
-      }
-    }
-    for (const key of used[KEYS_PROPERTY] || []) {
-      changed = isChanged(
-        (prevObj as any)[key],
-        (nextObj as any)[key],
-        affected,
-        cache,
-        isEqual,
-      );
-      if (changed) return changed;
-    }
-    if (changed === null) changed = true;
-    return changed;
-  } finally {
-    if (cache) {
-      cache.set(prevObj, {
-        [NEXT_OBJECT_PROPERTY]: nextObj,
-        [CHANGED_PROPERTY]: changed,
-      });
     }
   }
+  for (const key of used[KEYS_PROPERTY] || []) {
+    changed = isChanged(
+      (prevObj as any)[key],
+      (nextObj as any)[key],
+      affected,
+      cache,
+      isEqual,
+    );
+    if (changed) return changed;
+  }
+  if (changed === null) throw new Error('invalid used');
+  return changed;
 };
 
 // explicitly track object with memo
