@@ -1,7 +1,7 @@
 {
   "name": "proxy-compare",
   "description": "Compare two objects using accessed properties with Proxy",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "type": "module",
   "author": "Daishi Kato",
   "repository": {

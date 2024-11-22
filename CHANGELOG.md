@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [3.0.1] - 2024-11-22
+
+### Changed
+
+- refactor: simplify `cache` usage for object cycles #77
+
 ## [3.0.0] - 2024-04-29
 
 ### Changed
