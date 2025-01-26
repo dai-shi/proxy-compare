@@ -119,7 +119,6 @@ describe('array spec', () => {
     const s1 = [1, 2, 3];
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1);
-    // eslint-disable-next-line no-restricted-syntax
     for (const x of p1) {
       noop(x);
     }
@@ -147,7 +146,6 @@ describe('keys spec', () => {
     const s1 = { a: { b: 'b' }, c: 'c' };
     const a1 = new WeakMap();
     const p1 = createProxy(s1, a1);
-    // eslint-disable-next-line no-restricted-syntax, guard-for-in
     for (const k in p1) {
       noop(k);
     }
@@ -315,7 +313,6 @@ describe('builtin objects spec', () => {
   // we can't track builtin objects
 
   it('boolean', () => {
-    /* eslint-disable no-new-wrappers */
     const proxyCache = new WeakMap();
     const s1 = { a: new Boolean(false) };
     const a1 = new WeakMap();
@@ -323,7 +320,6 @@ describe('builtin objects spec', () => {
     noop(p1.a.valueOf());
     expect(isChanged(s1, s1, a1)).toBe(false);
     expect(isChanged(s1, { a: new Boolean(false) }, a1)).toBe(true);
-    /* eslint-enable no-new-wrappers */
   });
 
   it('error', () => {

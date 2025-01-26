@@ -12,7 +12,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "proxy-compare": ["./src/index.js"]
+      "proxy-compare": ["./src/index.ts"]
     }
   },
   "exclude": ["dist", "examples"]
