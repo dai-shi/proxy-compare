@@ -129,6 +129,10 @@ const createProxyHandler = <T extends object>(
       if (key === GET_ORIGINAL_SYMBOL) {
         return origObj;
       }
+      if (key === TRACK_MEMO_SYMBOL) {
+        recordObjectAsUsed();
+        return true;
+      }
       recordUsage(KEYS_PROPERTY, key);
       return createProxy(
         Reflect.get(target, key),
@@ -138,10 +142,6 @@ const createProxyHandler = <T extends object>(
       );
     },
     has(target, key) {
-      if (key === TRACK_MEMO_SYMBOL) {
-        recordObjectAsUsed();
-        return true;
-      }
       recordUsage(HAS_KEY_PROPERTY, key);
       return Reflect.has(target, key);
     },
@@ -339,7 +339,7 @@ export const isChanged = (
 // explicitly track object with memo
 export const trackMemo = (obj: unknown) => {
   if (isObjectToTrack(obj)) {
-    return TRACK_MEMO_SYMBOL in obj;
+    return !!obj[TRACK_MEMO_SYMBOL];
   }
   return false;
 };
